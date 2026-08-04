@@ -1,13 +1,17 @@
 const mongoose = require("mongoose");
 
 const qrSessionSchema = new mongoose.Schema(
-
   {
-
     token: {
       type: String,
       required: true,
       unique: true
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     },
 
     date: {
@@ -24,16 +28,10 @@ const qrSessionSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     }
-
   },
-
   {
     timestamps: true
   }
-
 );
 
-module.exports = mongoose.model(
-  "QRSession",
-  qrSessionSchema
-);
+module.exports = mongoose.model("QRSession", qrSessionSchema);
