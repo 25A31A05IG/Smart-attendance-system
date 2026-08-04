@@ -3,8 +3,9 @@ const Student = require("../models/Student");
 const Attendance = require("../models/Attendance");
 const { v4: uuidv4 } = require("uuid");
 
-
+// =========================
 // Generate QR
+// =========================
 const generateQR = async (req, res) => {
   try {
 
@@ -14,6 +15,7 @@ const generateQR = async (req, res) => {
 
     const session = new QRSession({
       token,
+      createdBy: req.user.id,
       expiresAt,
       active: true
     });
@@ -35,9 +37,9 @@ const generateQR = async (req, res) => {
   }
 };
 
-
-
-// Student marks attendance
+// =========================
+// Mark Attendance
+// =========================
 const markQRAttendance = async (req, res) => {
 
   try {
@@ -50,21 +52,17 @@ const markQRAttendance = async (req, res) => {
     });
 
     if (!session) {
-
       return res.status(400).json({
         success: false,
         message: "Invalid QR Code"
       });
-
     }
 
     if (new Date() > session.expiresAt) {
-
       return res.status(400).json({
         success: false,
         message: "QR Code Expired"
       });
-
     }
 
     const student = await Student.findOne({
@@ -72,73 +70,56 @@ const markQRAttendance = async (req, res) => {
     });
 
     if (!student) {
-
       return res.status(404).json({
         success: false,
         message: "Student not found"
       });
-
     }
 
     const today = new Date();
-
     today.setHours(0, 0, 0, 0);
 
     const alreadyMarked = await Attendance.findOne({
       student: student._id,
-      date: { $gte: today }
+      date: {
+        $gte: today
+      }
     });
 
     if (alreadyMarked) {
-
       return res.status(400).json({
         success: false,
         message: "Attendance already marked today"
       });
-
     }
 
     const attendance = new Attendance({
-
       student: student._id,
-
       status: "Present",
-
-      method: "QR Code"
-
+      method: "QR Code",
+      createdBy: session.createdBy
     });
 
     await attendance.save();
 
     res.status(200).json({
-
       success: true,
-
       message: "Attendance Marked Successfully",
-
       student
-
     });
 
   } catch (error) {
 
     res.status(500).json({
-
       success: false,
-
       message: error.message
-
     });
 
   }
 
 };
 
-
 module.exports = {
-
   generateQR,
-
   markQRAttendance
-
 };
