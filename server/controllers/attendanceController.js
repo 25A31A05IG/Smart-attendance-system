@@ -7,48 +7,58 @@ const QRSession = require("../models/QRSession");
 // ============================
 // Manual Attendance
 // ============================
-const markAttendance = async(req,res)=>{
+const markAttendance = async (req, res) => {
 
-    try{
+    try {
 
-        const {student,status,method}=req.body;
+        const { student, status, method } = req.body;
 
+        // Start of today
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
 
-        const attendance = new Attendance({
+        // End of today
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
 
-            student,
-
-            status,
-
-            method: method || "Manual",
-
-            createdBy:req.user.id
-
+        // Check if attendance is already marked today
+        const existingAttendance = await Attendance.findOne({
+            student: student,
+            createdBy: req.user.id,
+            date: {
+                $gte: start,
+                $lte: end
+            }
         });
 
+        if (existingAttendance) {
+            return res.status(400).json({
+                success: false,
+                message: "Attendance already marked today"
+            });
+        }
+
+        // Save attendance
+        const attendance = new Attendance({
+            student,
+            status,
+            method: method || "Manual",
+            createdBy: req.user.id
+        });
 
         await attendance.save();
 
-
         res.status(201).json({
-
-            success:true,
-
-            message:"Attendance marked successfully",
-
-            data:attendance
-
+            success: true,
+            message: "Attendance marked successfully",
+            data: attendance
         });
 
-
-    }catch(error){
+    } catch (error) {
 
         res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
+            success: false,
+            message: error.message
         });
 
     }
