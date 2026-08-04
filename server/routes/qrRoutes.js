@@ -1,31 +1,17 @@
 const express = require("express");
-
 const router = express.Router();
 
+const authMiddleware = require("../middleware/authMiddleware");
+
 const {
-
-    generateQR,
-
-    markQRAttendance
-
+  generateQR,
+  markQRAttendance
 } = require("../controllers/qrController");
 
+// Teacher/Admin generates QR
+router.post("/generate", authMiddleware, generateQR);
 
-
-// Generate QR Code
-router.post(
-    "/generate",
-    generateQR
-);
-
-
-
-// Student marks attendance
-router.post(
-    "/mark",
-    markQRAttendance
-);
-
-
+// Student scans QR
+router.post("/mark", markQRAttendance);
 
 module.exports = router;
