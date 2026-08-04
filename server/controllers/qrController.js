@@ -8,7 +8,6 @@ const { v4: uuidv4 } = require("uuid");
 // =========================
 const generateQR = async (req, res) => {
   try {
-
     const token = uuidv4();
 
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -28,12 +27,10 @@ const generateQR = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message
     });
-
   }
 };
 
@@ -41,11 +38,10 @@ const generateQR = async (req, res) => {
 // Mark Attendance
 // =========================
 const markQRAttendance = async (req, res) => {
-
   try {
-
     const { token, rollNumber } = req.body;
 
+    // Find QR Session
     const session = await QRSession.findOne({
       token,
       active: true
@@ -58,6 +54,7 @@ const markQRAttendance = async (req, res) => {
       });
     }
 
+    // Check expiry
     if (new Date() > session.expiresAt) {
       return res.status(400).json({
         success: false,
@@ -65,8 +62,10 @@ const markQRAttendance = async (req, res) => {
       });
     }
 
+    // Find student belonging to the same teacher
     const student = await Student.findOne({
-      rollNumber
+      rollNumber,
+      createdBy: session.createdBy
     });
 
     if (!student) {
@@ -76,13 +75,20 @@ const markQRAttendance = async (req, res) => {
       });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Today's start and end time
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
 
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    // Prevent duplicate attendance
     const alreadyMarked = await Attendance.findOne({
       student: student._id,
+      createdBy: session.createdBy,
       date: {
-        $gte: today
+        $gte: start,
+        $lte: end
       }
     });
 
@@ -93,6 +99,7 @@ const markQRAttendance = async (req, res) => {
       });
     }
 
+    // Save attendance
     const attendance = new Attendance({
       student: student._id,
       status: "Present",
@@ -109,14 +116,11 @@ const markQRAttendance = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message
     });
-
   }
-
 };
 
 module.exports = {
