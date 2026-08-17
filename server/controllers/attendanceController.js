@@ -2,557 +2,375 @@ const Attendance = require("../models/Attendance");
 const Student = require("../models/Student");
 const QRSession = require("../models/QRSession");
 
-
-
 // ============================
 // Manual Attendance
 // ============================
 const markAttendance = async (req, res) => {
+  try {
+    const { student, status, method } = req.body;
 
-    try {
+    // Start of today
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
 
-        const { student, status, method } = req.body;
+    // End of today
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
 
-        // Start of today
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
+    // Check if attendance is already marked today
+    const existingAttendance = await Attendance.findOne({
+      student: student,
+      createdBy: req.user.id,
+      date: {
+        $gte: start,
+        $lte: end,
+      },
+    });
 
-        // End of today
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
-
-        // Check if attendance is already marked today
-        const existingAttendance = await Attendance.findOne({
-            student: student,
-            createdBy: req.user.id,
-            date: {
-                $gte: start,
-                $lte: end
-            }
-        });
-
-        if (existingAttendance) {
-            return res.status(400).json({
-                success: false,
-                message: "Attendance already marked today"
-            });
-        }
-
-        // Save attendance
-        const attendance = new Attendance({
-            student,
-            status,
-            method: method || "Manual",
-            createdBy: req.user.id
-        });
-
-        await attendance.save();
-
-        res.status(201).json({
-            success: true,
-            message: "Attendance marked successfully",
-            data: attendance
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-
+    if (existingAttendance) {
+      return res.status(400).json({
+        success: false,
+        message: "Attendance already marked today",
+      });
     }
 
+    // Save attendance
+    const attendance = new Attendance({
+      student,
+      status,
+      method: method || "Manual",
+      createdBy: req.user.id,
+    });
+
+    await attendance.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Attendance marked successfully",
+      data: attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
-
-
-
-
 
 // ============================
 // Bulk Attendance
 // ============================
-const bulkMarkAttendance = async(req,res)=>{
+const bulkMarkAttendance = async (req, res) => {
+  try {
+    const { attendanceList } = req.body;
 
-    try{
+    for (const item of attendanceList) {
+      const attendance = new Attendance({
+        student: item.student,
+        status: item.status,
+        method: "Manual",
+        createdBy: req.user.id,
+      });
 
-        const {attendanceList}=req.body;
-
-
-        for(const item of attendanceList){
-
-
-            const attendance = new Attendance({
-
-                student:item.student,
-
-                status:item.status,
-
-                method:"Manual",
-
-                createdBy:req.user.id
-
-            });
-
-
-            await attendance.save();
-
-
-        }
-
-
-
-        res.status(200).json({
-
-            success:true,
-
-            message:"Attendance saved successfully"
-
-        });
-
-
-
-    }catch(error){
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+      await attendance.save();
     }
 
+    res.status(200).json({
+      success: true,
+      message: "Attendance saved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
-
-
-
-
-
 
 // ============================
 // QR Attendance
 // ============================
-const markQRAttendance = async(req,res)=>{
+const markQRAttendance = async (req, res) => {
+  try {
+    const { token, rollNumber } = req.body;
 
-    try{
+    const qrSession = await QRSession.findOne({
+      token,
+      active: true,
+    });
 
-
-        const {token,rollNumber}=req.body;
-
-
-
-        const qrSession=await QRSession.findOne({
-
-            token,
-
-            active:true
-
-        });
-
-
-
-        if(!qrSession){
-
-            return res.status(400).json({
-
-                success:false,
-
-                message:"Invalid QR"
-
-            });
-
-        }
-
-
-
-        const student=await Student.findOne({
-
-            rollNumber,
-
-            createdBy:req.user.id
-
-        });
-
-
-
-        if(!student){
-
-            return res.status(404).json({
-
-                success:false,
-
-                message:"Student not found"
-
-            });
-
-        }
-
-
-
-
-        const attendance=new Attendance({
-
-            student:student._id,
-
-            status:"Present",
-
-            method:"QR Code",
-
-            createdBy:req.user.id
-
-        });
-
-
-
-        await attendance.save();
-
-
-
-        res.status(201).json({
-
-            success:true,
-
-            message:"Attendance marked"
-
-        });
-
-
-
-    }catch(error){
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+    if (!qrSession) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid QR",
+      });
     }
 
+    const student = await Student.findOne({
+      rollNumber,
+      createdBy: req.user.id,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const attendance = new Attendance({
+      student: student._id,
+      status: "Present",
+      method: "QR Code",
+      createdBy: req.user.id,
+    });
+
+    await attendance.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Attendance marked",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
+// ============================
+// Face Recognition Attendance
+// ============================
+const markFaceAttendance = async (req, res) => {
+  try {
+    const { student } = req.body;
 
+    if (!student) {
+      return res.status(400).json({
+        success: false,
+        message: "Student ID is required",
+      });
+    }
 
+    // Make sure the student belongs to this teacher
+    const studentRecord = await Student.findOne({
+      _id: student,
+      createdBy: req.user.id,
+    });
 
+    if (!studentRecord) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
 
+    // Student must have registered face
+    if (
+      !studentRecord.faceEmbedding ||
+      studentRecord.faceEmbedding.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Face is not registered for this student",
+      });
+    }
 
+    // Start of today
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
 
+    // End of today
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    // Prevent duplicate attendance
+    const existingAttendance = await Attendance.findOne({
+      student: student,
+      createdBy: req.user.id,
+      date: {
+        $gte: start,
+        $lte: end,
+      },
+    });
+
+    if (existingAttendance) {
+      return res.status(400).json({
+        success: false,
+        message: "Attendance already marked today",
+      });
+    }
+
+    // Save attendance
+    const attendance = new Attendance({
+      student: student,
+      status: "Present",
+      method: "Face Recognition",
+      createdBy: req.user.id,
+    });
+
+    await attendance.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Face attendance marked successfully",
+      data: attendance,
+    });
+  } catch (error) {
+    console.error("Face attendance error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // ============================
 // All Attendance
 // ============================
-const getAttendance=async(req,res)=>{
+const getAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.find({
+      createdBy: req.user.id,
+    })
+      .populate("student")
+      .sort({ date: -1 });
 
-    try{
-
-
-        const attendance=await Attendance.find({
-
-            createdBy:req.user.id
-
-        })
-
-        .populate("student")
-
-        .sort({date:-1});
-
-
-
-        res.json({
-
-            success:true,
-
-            data:attendance
-
-        });
-
-
-
-    }catch(error){
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
-
+    res.json({
+      success: true,
+      data: attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
-
-
-
-
-
-
-
 
 // ============================
 // History
 // ============================
-const getAttendanceHistory=async(req,res)=>{
+const getAttendanceHistory = async (req, res) => {
+  try {
+    const attendance = await Attendance.find({
+      createdBy: req.user.id,
+    }).populate("student");
 
-    try{
+    const history = {};
 
+    attendance.forEach((record) => {
+      const date = new Date(record.date)
+        .toISOString()
+        .split("T")[0];
 
-        const attendance=await Attendance.find({
+      if (!history[date]) {
+        history[date] = {
+          date,
+          present: 0,
+          absent: 0,
+          total: 0,
+        };
+      }
 
-            createdBy:req.user.id
+      history[date].total++;
 
-        })
+      if (record.status === "Present") {
+        history[date].present++;
+      } else {
+        history[date].absent++;
+      }
+    });
 
-        .populate("student");
-
-
-
-        const history={};
-
-
-
-        attendance.forEach(record=>{
-
-
-            const date=new Date(record.date)
-
-            .toISOString()
-
-            .split("T")[0];
-
-
-
-            if(!history[date]){
-
-
-                history[date]={
-
-                    date,
-
-                    present:0,
-
-                    absent:0,
-
-                    total:0
-
-                };
-
-
-            }
-
-
-
-            history[date].total++;
-
-
-
-            if(record.status==="Present")
-
-                history[date].present++;
-
-            else
-
-                history[date].absent++;
-
-
-        });
-
-
-
-        res.json({
-
-            success:true,
-
-            data:Object.values(history)
-
-        });
-
-
-
-    }catch(error){
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
-
+    res.json({
+      success: true,
+      data: Object.values(history),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
-
-
-
-
-
-
-
 
 // ============================
 // Attendance By Date
 // ============================
-const getAttendanceByDate=async(req,res)=>{
+const getAttendanceByDate = async (req, res) => {
+  try {
+    const date = req.params.date;
 
-    try{
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
 
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
 
-        const date=req.params.date;
+    const attendance = await Attendance.find({
+      createdBy: req.user.id,
+      date: {
+        $gte: start,
+        $lte: end,
+      },
+    }).populate("student");
 
-
-
-        const start=new Date(date);
-
-        start.setHours(0,0,0,0);
-
-
-
-        const end=new Date(date);
-
-        end.setHours(23,59,59,999);
-
-
-
-
-        const attendance=await Attendance.find({
-
-            createdBy:req.user.id,
-
-            date:{
-
-                $gte:start,
-
-                $lte:end
-
-            }
-
-        })
-
-        .populate("student");
-
-
-
-        res.json({
-
-            success:true,
-
-            data:attendance
-
-        });
-
-
-
-    }catch(error){
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
-
+    res.json({
+      success: true,
+      data: attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
-
-
-
-
-
-
-
 
 // ============================
 // Student Report
 // ============================
-const getStudentAttendance=async(req,res)=>{
+const getStudentAttendance = async (req, res) => {
+  try {
+    const student = await Student.findOne({
+      rollNumber: req.params.rollNumber,
+      createdBy: req.user.id,
+    });
 
-    try{
-
-
-        const student=await Student.findOne({
-
-            rollNumber:req.params.rollNumber,
-
-            createdBy:req.user.id
-
-        });
-
-
-
-        if(!student){
-
-            return res.status(404).json({
-
-                success:false,
-
-                message:"Student not found"
-
-            });
-
-        }
-
-
-
-        const attendance=await Attendance.find({
-
-            student:student._id,
-
-            createdBy:req.user.id
-
-        });
-
-
-
-        res.json({
-
-            success:true,
-
-            student,
-
-            attendance
-
-        });
-
-
-
-    }catch(error){
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
     }
 
+    const attendance = await Attendance.find({
+      student: student._id,
+      createdBy: req.user.id,
+    });
+
+    res.json({
+      success: true,
+      student,
+      attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
-
-
-
-
-module.exports={
-
-    markAttendance,
-
-    bulkMarkAttendance,
-
-    markQRAttendance,
-
-    getAttendance,
-
-    getAttendanceHistory,
-
-    getAttendanceByDate,
-
-    getStudentAttendance
-
+module.exports = {
+  markAttendance,
+  bulkMarkAttendance,
+  markQRAttendance,
+  markFaceAttendance,
+  getAttendance,
+  getAttendanceHistory,
+  getAttendanceByDate,
+  getStudentAttendance,
 };
