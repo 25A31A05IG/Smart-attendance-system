@@ -32,25 +32,19 @@ const studentSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Uploaded face photo
     faceImage: {
       type: String,
       default: "",
     },
 
-    // ==========================================
-    // Face Recognition Descriptor
-    // face-api.js = 128 numbers
-    // ==========================================
-
+    // face-api.js generates 128 values
     faceEmbedding: {
       type: [Number],
       default: [],
     },
 
-    // ==========================================
-    // Student Owner
-    // ==========================================
-
+    // Owner of this student
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -62,10 +56,7 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-// ==========================================
-// Roll number unique per teacher
-// ==========================================
-
+// Roll number unique only for each teacher
 studentSchema.index(
   {
     rollNumber: 1,
