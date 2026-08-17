@@ -1,82 +1,59 @@
 const express = require("express");
-const router = express.Router();
 
+const router = express.Router();
 
 const upload = require("../config/upload");
 
 const authMiddleware = require("../middleware/authMiddleware");
 
-
-
 const {
-
-    createStudent,
-
-    getAllStudents,
-
-    deleteStudent,
-
-    uploadFaceImage
-
+  createStudent,
+  getAllStudents,
+  deleteStudent,
+  uploadFaceImage,
 } = require("../controllers/studentController");
 
+// ==========================================
+// Protect all student routes
+// ==========================================
 
-
-
-// ============================
-// Protect Student Routes
-// ============================
 router.use(authMiddleware);
 
-
-
-
-// ============================
+// ==========================================
 // Create Student
-// ============================
+// ==========================================
+
 router.post(
-    "/",
-    createStudent
+  "/",
+  createStudent
 );
 
-
-
-
-// ============================
+// ==========================================
 // Get Logged-in User Students
-// ============================
+// ==========================================
+
 router.get(
-    "/",
-    getAllStudents
+  "/",
+  getAllStudents
 );
 
-
-
-
-// ============================
+// ==========================================
 // Delete Student
-// ============================
+// ==========================================
+
 router.delete(
-    "/:id",
-    deleteStudent
+  "/:id",
+  deleteStudent
 );
 
+// ==========================================
+// Register / Update Face
+// ==========================================
 
-
-
-// ============================
-// Upload Face Image
-// ============================
 router.post(
-
-    "/upload/:id",
-
-    upload.single("faceImage"),
-
-    uploadFaceImage
-
+  "/upload/:id",
+  upload.single("faceImage"),
+  uploadFaceImage
 );
-
-
 
 module.exports = router;
