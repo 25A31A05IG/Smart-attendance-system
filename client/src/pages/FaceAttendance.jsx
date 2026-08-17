@@ -1,10 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import * as faceapi from "face-api.js";
+
 import Webcam from "react-webcam";
+
 import Sidebar from "../components/Sidebar";
+
 import API from "../api/axios";
 
 function FaceAttendance() {
+
   const webcamRef = useRef(null);
 
   const [modelsLoaded, setModelsLoaded] =
@@ -17,24 +26,32 @@ function FaceAttendance() {
     useState(false);
 
   const [message, setMessage] =
-    useState("Loading face recognition models...");
+    useState(
+      "Loading face recognition models..."
+    );
 
   // ==========================================
-  // Load Models + Students
+  // Load models and students
   // ==========================================
 
   useEffect(() => {
+
     loadModels();
+
     fetchStudents();
+
   }, []);
 
   // ==========================================
-  // Load Models
+  // Load face-api models
   // ==========================================
 
   const loadModels = async () => {
+
     try {
-      const MODEL_URL = "/face-models";
+
+      const MODEL_URL =
+        "/face-models";
 
       await faceapi.nets.tinyFaceDetector.loadFromUri(
         MODEL_URL
@@ -55,6 +72,7 @@ function FaceAttendance() {
       );
 
     } catch (error) {
+
       console.error(
         "MODEL LOADING ERROR:",
         error
@@ -67,21 +85,29 @@ function FaceAttendance() {
   };
 
   // ==========================================
-  // Fetch Students
+  // Fetch only registered students
   // ==========================================
 
   const fetchStudents = async () => {
+
     try {
+
       const response =
-        await API.get("/students");
+        await API.get(
+          "/students"
+        );
+
+      const allStudents =
+        response.data.data;
 
       const registeredStudents =
-        response.data.data.filter(
+        allStudents.filter(
           (student) =>
             Array.isArray(
               student.faceEmbedding
             ) &&
-            student.faceEmbedding.length === 128
+            student.faceEmbedding.length ===
+              128
         );
 
       setStudents(
@@ -89,11 +115,12 @@ function FaceAttendance() {
       );
 
       console.log(
-        "Registered face students:",
+        "REGISTERED STUDENTS:",
         registeredStudents
       );
 
     } catch (error) {
+
       console.error(
         "STUDENT LOADING ERROR:",
         error
@@ -106,13 +133,14 @@ function FaceAttendance() {
   };
 
   // ==========================================
-  // Euclidean Distance
+  // Calculate Euclidean Distance
   // ==========================================
 
   const getDistance = (
     descriptor1,
     descriptor2
   ) => {
+
     let sum = 0;
 
     for (
@@ -120,19 +148,21 @@ function FaceAttendance() {
       i < descriptor1.length;
       i++
     ) {
+
       const difference =
         descriptor1[i] -
         descriptor2[i];
 
       sum +=
-        difference * difference;
+        difference *
+        difference;
     }
 
     return Math.sqrt(sum);
   };
 
   // ==========================================
-  // Capture Face
+  // Capture and recognize
   // ==========================================
 
   const capture = async () => {
@@ -142,6 +172,7 @@ function FaceAttendance() {
     }
 
     if (!modelsLoaded) {
+
       alert(
         "Models are still loading..."
       );
@@ -149,7 +180,10 @@ function FaceAttendance() {
       return;
     }
 
-    if (students.length === 0) {
+    if (
+      students.length === 0
+    ) {
+
       alert(
         "No registered faces found."
       );
@@ -157,7 +191,10 @@ function FaceAttendance() {
       return;
     }
 
-    if (!webcamRef.current) {
+    if (
+      !webcamRef.current
+    ) {
+
       alert(
         "Camera is not available."
       );
@@ -174,7 +211,7 @@ function FaceAttendance() {
     try {
 
       // ========================================
-      // Capture Camera Image
+      // Capture image
       // ========================================
 
       const imageSrc =
@@ -182,19 +219,19 @@ function FaceAttendance() {
 
       if (!imageSrc) {
 
-        setMessage(
-          "Camera capture failed."
-        );
-
         alert(
           "Could not capture image."
+        );
+
+        setMessage(
+          "Camera capture failed."
         );
 
         return;
       }
 
       // ========================================
-      // Convert Image
+      // Convert screenshot
       // ========================================
 
       const img =
@@ -203,7 +240,7 @@ function FaceAttendance() {
         );
 
       // ========================================
-      // Detect Face
+      // Detect face
       // ========================================
 
       const detection =
@@ -222,19 +259,19 @@ function FaceAttendance() {
 
       if (!detection) {
 
-        setMessage(
-          "No face detected."
+        alert(
+          "No face detected. Please look at the camera."
         );
 
-        alert(
-          "No face detected. Please look directly at the camera."
+        setMessage(
+          "No face detected."
         );
 
         return;
       }
 
       // ========================================
-      // Current Face Descriptor
+      // Current descriptor
       // ========================================
 
       const currentDescriptor =
@@ -248,7 +285,7 @@ function FaceAttendance() {
       );
 
       // ========================================
-      // Compare With ALL Students
+      // Find BEST match
       // ========================================
 
       let bestMatch = null;
@@ -259,17 +296,19 @@ function FaceAttendance() {
       students.forEach(
         (student) => {
 
+          const registered =
+            student.faceEmbedding;
+
           if (
             !Array.isArray(
-              student.faceEmbedding
+              registered
             )
           ) {
             return;
           }
 
           if (
-            student.faceEmbedding.length !==
-            128
+            registered.length !== 128
           ) {
             return;
           }
@@ -277,13 +316,11 @@ function FaceAttendance() {
           const distance =
             getDistance(
               currentDescriptor,
-              student.faceEmbedding
+              registered
             );
 
           console.log(
-            student.name,
-            "=>",
-            distance
+            `${student.name}: ${distance}`
           );
 
           if (
@@ -297,16 +334,15 @@ function FaceAttendance() {
             bestMatch =
               student;
           }
-
         }
       );
 
       // ========================================
-      // Debug Information
+      // Show comparison result
       // ========================================
 
       console.log(
-        "=============================="
+        "================================"
       );
 
       console.log(
@@ -320,17 +356,18 @@ function FaceAttendance() {
       );
 
       console.log(
-        "=============================="
+        "================================"
       );
 
       // ========================================
-      // STRICT MATCH THRESHOLD
+      // Recognition threshold
       // ========================================
 
-      const MATCH_THRESHOLD = 0.48;
+      const MATCH_THRESHOLD =
+        0.48;
 
       // ========================================
-      // Reject Unknown Face
+      // Reject unknown face
       // ========================================
 
       if (
@@ -351,11 +388,15 @@ function FaceAttendance() {
       }
 
       // ========================================
-      // Student Recognized
+      // Recognized
       // ========================================
 
+      setMessage(
+        `Recognized: ${bestMatch.name}`
+      );
+
       console.log(
-        "Recognized student:",
+        "Recognized:",
         bestMatch.name
       );
 
@@ -364,12 +405,8 @@ function FaceAttendance() {
         bestDistance
       );
 
-      setMessage(
-        `Recognized: ${bestMatch.name}`
-      );
-
       // ========================================
-      // Send Student ID To Backend
+      // Mark attendance
       // ========================================
 
       const response =
@@ -409,11 +446,11 @@ function FaceAttendance() {
         error.response?.data?.message ||
         "Face attendance failed";
 
-      setMessage(
+      alert(
         errorMessage
       );
 
-      alert(
+      setMessage(
         errorMessage
       );
 
@@ -458,7 +495,7 @@ function FaceAttendance() {
               {message}
             </p>
 
-            {/* Capture Button */}
+            {/* Button */}
 
             <button
               onClick={capture}
