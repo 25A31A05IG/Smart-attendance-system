@@ -18,7 +18,9 @@ const createStudent = async (req, res) => {
       message: "Student created successfully",
       data: student,
     });
+
   } catch (error) {
+
     console.error(
       "CREATE STUDENT ERROR:",
       error
@@ -32,25 +34,23 @@ const createStudent = async (req, res) => {
 };
 
 // ==================================================
-// Get Students
+// Get Logged-in User Students
 // ==================================================
 
-const getAllStudents = async (
-  req,
-  res
-) => {
+const getAllStudents = async (req, res) => {
   try {
-    const students =
-      await Student.find({
-        createdBy: req.user.id,
-      });
+    const students = await Student.find({
+      createdBy: req.user.id,
+    });
 
     res.status(200).json({
       success: true,
       count: students.length,
       data: students,
     });
+
   } catch (error) {
+
     console.error(
       "GET STUDENTS ERROR:",
       error
@@ -67,11 +67,9 @@ const getAllStudents = async (
 // Delete Student
 // ==================================================
 
-const deleteStudent = async (
-  req,
-  res
-) => {
+const deleteStudent = async (req, res) => {
   try {
+
     const student =
       await Student.findOneAndDelete({
         _id: req.params.id,
@@ -90,7 +88,9 @@ const deleteStudent = async (
       message:
         "Student deleted successfully",
     });
+
   } catch (error) {
+
     console.error(
       "DELETE STUDENT ERROR:",
       error
@@ -107,13 +107,15 @@ const deleteStudent = async (
 // Upload / Register Face
 // ==================================================
 
-const uploadFaceImage = async (
-  req,
-  res
-) => {
+const uploadFaceImage = async (req, res) => {
   try {
+
     console.log(
-      "========== FACE REGISTRATION =========="
+      "======================================"
+    );
+
+    console.log(
+      "FACE REGISTRATION STARTED"
     );
 
     console.log(
@@ -127,18 +129,18 @@ const uploadFaceImage = async (
     );
 
     console.log(
-      "File:",
+      "Uploaded File:",
       req.file
     );
 
     console.log(
-      "Body:",
+      "Request Body:",
       req.body
     );
 
-    // ==========================================
-    // Authentication check
-    // ==========================================
+    // ------------------------------------------
+    // Authentication
+    // ------------------------------------------
 
     if (!req.user?.id) {
       return res.status(401).json({
@@ -148,9 +150,9 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // File check
-    // ==========================================
+    // ------------------------------------------
+    // Check image
+    // ------------------------------------------
 
     if (!req.file) {
       return res.status(400).json({
@@ -160,9 +162,9 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // Embedding check
-    // ==========================================
+    // ------------------------------------------
+    // Check embedding
+    // ------------------------------------------
 
     if (!req.body.faceEmbedding) {
       return res.status(400).json({
@@ -172,9 +174,9 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // Find Student
-    // ==========================================
+    // ------------------------------------------
+    // Find student
+    // ------------------------------------------
 
     const student =
       await Student.findOne({
@@ -190,20 +192,23 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // Parse Face Embedding
-    // ==========================================
+    // ------------------------------------------
+    // Parse embedding
+    // ------------------------------------------
 
     let faceEmbedding;
 
     try {
+
       faceEmbedding =
         JSON.parse(
           req.body.faceEmbedding
         );
+
     } catch (error) {
+
       console.error(
-        "JSON PARSE ERROR:",
+        "FACE EMBEDDING JSON ERROR:",
         error
       );
 
@@ -214,9 +219,9 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // Validate Array
-    // ==========================================
+    // ------------------------------------------
+    // Validate embedding
+    // ------------------------------------------
 
     if (
       !Array.isArray(
@@ -230,10 +235,7 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // Validate 128 values
-    // ==========================================
-
+    // face-api.js descriptor = 128 values
     if (
       faceEmbedding.length !== 128
     ) {
@@ -244,13 +246,14 @@ const uploadFaceImage = async (
       });
     }
 
-    // ==========================================
-    // Validate Numbers
-    // ==========================================
+    // ------------------------------------------
+    // Validate every value
+    // ------------------------------------------
 
     for (
       const value of faceEmbedding
     ) {
+
       if (
         typeof value !== "number" ||
         !Number.isFinite(value)
@@ -263,28 +266,38 @@ const uploadFaceImage = async (
       }
     }
 
-    // ==========================================
-    // Save Face Image
-    // ==========================================
+    // ------------------------------------------
+    // Save image
+    // ------------------------------------------
 
     student.faceImage =
       req.file.filename;
 
-    // ==========================================
-    // Save Face Embedding
-    // ==========================================
+    // ------------------------------------------
+    // Save embedding
+    // ------------------------------------------
 
     student.faceEmbedding =
       faceEmbedding;
 
-    // ==========================================
-    // Save to MongoDB
-    // ==========================================
+    // ------------------------------------------
+    // Save student
+    // ------------------------------------------
 
     await student.save();
 
     console.log(
-      "FACE REGISTRATION SUCCESS"
+      "FACE REGISTRATION SUCCESS:",
+      student.name
+    );
+
+    console.log(
+      "Embedding length:",
+      student.faceEmbedding.length
+    );
+
+    console.log(
+      "======================================"
     );
 
     return res.status(200).json({
@@ -297,7 +310,7 @@ const uploadFaceImage = async (
   } catch (error) {
 
     console.error(
-      "================================"
+      "======================================"
     );
 
     console.error(
@@ -320,7 +333,7 @@ const uploadFaceImage = async (
     );
 
     console.error(
-      "================================"
+      "======================================"
     );
 
     return res.status(500).json({
@@ -331,10 +344,6 @@ const uploadFaceImage = async (
     });
   }
 };
-
-// ==================================================
-// Exports
-// ==================================================
 
 module.exports = {
   createStudent,
