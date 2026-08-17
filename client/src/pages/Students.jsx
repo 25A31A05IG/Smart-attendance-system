@@ -9,14 +9,6 @@ function Students() {
   const [uploadStudentId, setUploadStudentId] =
     useState(null);
 
-  const [modelsLoaded, setModelsLoaded] =
-    useState(false);
-
-  const [loadingModels, setLoadingModels] =
-    useState(true);
-
-  const fileRef = useRef(null);
-
   const [student, setStudent] = useState({
     name: "",
     rollNumber: "",
@@ -26,73 +18,21 @@ function Students() {
     section: "",
   });
 
+  const fileRef = useRef(null);
+
+  const [faceModelsReady, setFaceModelsReady] =
+    useState(false);
+
+  const [loadingFaceModels, setLoadingFaceModels] =
+    useState(false);
+
   // ==================================================
   // Initial Load
   // ==================================================
 
   useEffect(() => {
     fetchStudents();
-    loadFaceModels();
   }, []);
-
-  // ==================================================
-  // Load Face Models
-  // ==================================================
-
-  const loadFaceModels = async () => {
-    try {
-      setLoadingModels(true);
-
-      const MODEL_URL = "/face-models";
-
-      console.log(
-        "Loading face recognition models..."
-      );
-
-      await faceapi.nets.tinyFaceDetector.loadFromUri(
-        MODEL_URL
-      );
-
-      console.log(
-        "Tiny Face Detector loaded"
-      );
-
-      await faceapi.nets.faceLandmark68Net.loadFromUri(
-        MODEL_URL
-      );
-
-      console.log(
-        "Face Landmark Model loaded"
-      );
-
-      await faceapi.nets.faceRecognitionNet.loadFromUri(
-        MODEL_URL
-      );
-
-      console.log(
-        "Face Recognition Model loaded"
-      );
-
-      setModelsLoaded(true);
-
-      console.log(
-        "All face models loaded successfully"
-      );
-    } catch (error) {
-      console.error(
-        "FACE MODEL ERROR:",
-        error
-      );
-
-      setModelsLoaded(false);
-
-      alert(
-        "Face recognition models could not be loaded. Check public/face-models."
-      );
-    } finally {
-      setLoadingModels(false);
-    }
-  };
 
   // ==================================================
   // Fetch Students
@@ -100,12 +40,9 @@ function Students() {
 
   const fetchStudents = async () => {
     try {
-      const response =
-        await API.get("/students");
+      const response = await API.get("/students");
 
-      setStudents(
-        response.data.data
-      );
+      setStudents(response.data.data);
     } catch (error) {
       console.error(
         "FETCH STUDENTS ERROR:",
@@ -115,14 +52,63 @@ function Students() {
   };
 
   // ==================================================
-  // Handle Student Form
+  // Load Face Models
+  // This happens silently when needed
+  // ==================================================
+
+  const loadFaceModels = async () => {
+    if (faceModelsReady) {
+      return true;
+    }
+
+    try {
+      setLoadingFaceModels(true);
+
+      const MODEL_URL = "/face-models";
+
+      await faceapi.nets.tinyFaceDetector.loadFromUri(
+        MODEL_URL
+      );
+
+      await faceapi.nets.faceLandmark68Net.loadFromUri(
+        MODEL_URL
+      );
+
+      await faceapi.nets.faceRecognitionNet.loadFromUri(
+        MODEL_URL
+      );
+
+      setFaceModelsReady(true);
+
+      console.log(
+        "Face recognition models loaded"
+      );
+
+      return true;
+    } catch (error) {
+      console.error(
+        "FACE MODEL LOADING ERROR:",
+        error
+      );
+
+      alert(
+        "Face recognition models could not be loaded. Please check the face-models folder."
+      );
+
+      return false;
+    } finally {
+      setLoadingFaceModels(false);
+    }
+  };
+
+  // ==================================================
+  // Handle Input
   // ==================================================
 
   const handleChange = (e) => {
     setStudent({
       ...student,
-      [e.target.name]:
-        e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -195,15 +181,15 @@ function Students() {
   };
 
   // ==================================================
-  // Open Face Upload
+  // Open Upload
   // ==================================================
 
-  const openUpload = (id) => {
-    if (!modelsLoaded) {
-      alert(
-        "Face recognition models are still loading. Please wait."
-      );
+  const openUpload = async (id) => {
+    // Load models silently
+    const ready =
+      await loadFaceModels();
 
+    if (!ready) {
       return;
     }
 
@@ -227,63 +213,37 @@ function Students() {
       return;
     }
 
-    if (!modelsLoaded) {
-      alert(
-        "Face recognition models are still loading."
-      );
-
-      return;
-    }
-
-    if (!uploadStudentId) {
-      alert(
-        "Student was not selected."
-      );
-
-      return;
-    }
-
     try {
-      console.log("");
       console.log(
-        "================================="
+        "================================"
       );
+
       console.log(
         "FACE REGISTRATION STARTED"
       );
-      console.log(
-        "================================="
-      );
-
-      // ------------------------------------------
-      // File information
-      // ------------------------------------------
 
       console.log(
-        "File name:",
+        "File:",
         file.name
       );
 
-      console.log(
-        "File type:",
-        file.type
-      );
-
-      console.log(
-        "File size:",
-        file.size
-      );
-
       // ------------------------------------------
-      // Create temporary image URL
+      // Make sure models are loaded
       // ------------------------------------------
 
-      const imageUrl =
-        URL.createObjectURL(file);
+      const ready =
+        await loadFaceModels();
+
+      if (!ready) {
+        return;
+      }
 
       // ------------------------------------------
       // Load image
       // ------------------------------------------
+
+      const imageUrl =
+        URL.createObjectURL(file);
 
       const img =
         await faceapi.fetchImage(
@@ -291,26 +251,15 @@ function Students() {
         );
 
       console.log(
-        "Image loaded successfully"
-      );
-
-      console.log(
-        "Image width:",
-        img.width
-      );
-
-      console.log(
-        "Image height:",
+        "Image loaded:",
+        img.width,
+        "x",
         img.height
       );
 
       // ------------------------------------------
       // Detect face
       // ------------------------------------------
-
-      console.log(
-        "Detecting face..."
-      );
 
       const detection =
         await faceapi
@@ -326,29 +275,24 @@ function Students() {
           .withFaceLandmarks()
           .withFaceDescriptor();
 
-      // Release image URL
       URL.revokeObjectURL(
         imageUrl
       );
 
       // ------------------------------------------
-      // Check face
+      // No face
       // ------------------------------------------
 
       if (!detection) {
-        console.error(
-          "NO FACE DETECTED"
-        );
-
         alert(
-          "Face could not be detected. Please upload a clear front-facing photo."
+          "No face detected. Please upload a clear front-facing photo."
         );
 
         return;
       }
 
       console.log(
-        "Face detected successfully"
+        "Face detected"
       );
 
       console.log(
@@ -366,30 +310,22 @@ function Students() {
         );
 
       console.log(
-        "Face descriptor generated"
-      );
-
-      console.log(
         "Embedding length:",
         faceEmbedding.length
       );
-
-      // ------------------------------------------
-      // Validate descriptor
-      // ------------------------------------------
 
       if (
         faceEmbedding.length !== 128
       ) {
         alert(
-          "Face descriptor generation failed."
+          "Unable to generate face descriptor."
         );
 
         return;
       }
 
       // ------------------------------------------
-      // Create FormData
+      // FormData
       // ------------------------------------------
 
       const formData =
@@ -408,101 +344,66 @@ function Students() {
       );
 
       console.log(
-        "Image + embedding prepared"
+        "Sending face registration to backend..."
       );
 
-      console.log(
-        "Uploading to backend..."
-      );
-
-      // ------------------------------------------
-      // Send to backend
-      // ------------------------------------------
+      // IMPORTANT:
+      // Don't manually set Content-Type.
+      // Axios/browser will create the correct
+      // multipart boundary automatically.
 
       const response =
         await API.post(
           `/students/upload/${uploadStudentId}`,
-          formData,
-          {
-            headers: {
-              "Content-Type":
-                "multipart/form-data",
-            },
-          }
+          formData
         );
 
       console.log(
-        "Backend response:",
+        "SERVER RESPONSE:",
         response.data
       );
 
-      // ------------------------------------------
-      // Success
-      // ------------------------------------------
+      if (
+        response.data.success
+      ) {
+        alert(
+          "Face registered successfully!"
+        );
 
-      alert(
-        "Face registered successfully!"
-      );
-
-      await fetchStudents();
-
-      // Clear input
-      e.target.value = "";
+        await fetchStudents();
+      }
 
       console.log(
-        "FACE REGISTRATION COMPLETED"
-      );
-
-      console.log(
-        "================================="
+        "================================"
       );
     } catch (error) {
-      console.error("");
       console.error(
-        "================================="
-      );
-      console.error(
-        "FACE REGISTRATION ERROR"
-      );
-      console.error(
-        "================================="
-      );
-
-      console.error(
-        "Error:",
+        "FACE REGISTRATION ERROR:",
         error
       );
 
       console.error(
-        "Message:",
-        error.message
-      );
-
-      console.error(
-        "Backend response:",
+        "SERVER RESPONSE:",
         error.response?.data
       );
 
       console.error(
-        "Status:",
+        "STATUS:",
         error.response?.status
       );
 
-      console.error(
-        "================================="
-      );
+      const serverMessage =
+        error.response?.data?.message;
 
       alert(
-        error.response?.data?.message ||
-          error.message ||
+        serverMessage ||
           "Face registration failed"
       );
     }
-  };
 
-  // ==================================================
-  // UI
-  // ==================================================
+    // Clear file input
+    e.target.value = "";
+  };
 
   return (
     <div className="flex">
@@ -518,24 +419,6 @@ function Students() {
         <h1 className="text-3xl font-bold mb-6 text-green-400">
           Students
         </h1>
-
-        {/* ==========================================
-            Face Model Status
-        ========================================== */}
-
-        <div
-          className={`mb-6 p-4 rounded-lg ${
-            modelsLoaded
-              ? "bg-green-900 text-green-300"
-              : "bg-yellow-900 text-yellow-300"
-          }`}
-        >
-          {modelsLoaded
-            ? "✅ Face Recognition Models Loaded"
-            : loadingModels
-            ? "⏳ Loading Face Recognition Models..."
-            : "❌ Face Recognition Models Failed to Load"}
-        </div>
 
         {/* ==========================================
             Add Student
@@ -560,19 +443,17 @@ function Students() {
               "year",
               "section",
             ].map((field) => (
+
               <input
                 key={field}
                 name={field}
                 placeholder={field}
-                value={
-                  student[field]
-                }
-                onChange={
-                  handleChange
-                }
+                value={student[field]}
+                onChange={handleChange}
                 required
                 className="bg-slate-900 border border-slate-600 p-3 rounded text-white"
               />
+
             ))}
 
           </div>
@@ -651,25 +532,17 @@ function Students() {
                     className="border-b border-slate-700"
                   >
 
-                    {/* Name */}
-
                     <td className="p-3">
                       {s.name}
                     </td>
-
-                    {/* Roll */}
 
                     <td className="text-center">
                       {s.rollNumber}
                     </td>
 
-                    {/* Department */}
-
                     <td className="text-center">
                       {s.department}
                     </td>
-
-                    {/* Year */}
 
                     <td className="text-center">
                       {s.year}
@@ -680,27 +553,13 @@ function Students() {
                     <td className="text-center">
 
                       {s.faceImage ? (
-                        <>
 
-                          <img
-                            src={`http://localhost:5000/uploads/${s.faceImage}`}
-                            alt="student"
-                            className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
-                          />
+                        <img
+                          src={`http://localhost:5000/uploads/${s.faceImage}`}
+                          alt="student"
+                          className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
+                        />
 
-                          {s.faceEmbedding &&
-                          s.faceEmbedding.length ===
-                            128 ? (
-                            <p className="text-green-400 text-sm mb-2">
-                              ✓ Face Registered
-                            </p>
-                          ) : (
-                            <p className="text-yellow-400 text-sm mb-2">
-                              ⚠ Face Descriptor Missing
-                            </p>
-                          )}
-
-                        </>
                       ) : (
 
                         <p className="text-gray-400 mb-2">
@@ -716,14 +575,7 @@ function Students() {
                             s._id
                           )
                         }
-                        disabled={
-                          !modelsLoaded
-                        }
-                        className={`text-white px-3 py-2 rounded ${
-                          modelsLoaded
-                            ? "bg-green-600 hover:bg-green-700"
-                            : "bg-gray-600 cursor-not-allowed"
-                        }`}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded"
                       >
                         📷{" "}
                         {s.faceImage
@@ -731,9 +583,19 @@ function Students() {
                           : "Register Face"}
                       </button>
 
+                      {s.faceEmbedding &&
+                      s.faceEmbedding.length ===
+                        128 ? (
+
+                        <p className="text-green-400 text-sm mt-2">
+                          ✓ Face Registered
+                        </p>
+
+                      ) : null}
+
                     </td>
 
-                    {/* Delete */}
+                    {/* Action */}
 
                     <td className="text-center">
 
