@@ -3,6 +3,7 @@ const Student = require("../models/Student");
 // ==================================================
 // Create Student
 // ==================================================
+
 const createStudent = async (req, res) => {
   try {
     const student = new Student({
@@ -18,8 +19,10 @@ const createStudent = async (req, res) => {
       data: student,
     });
   } catch (error) {
-    console.error("CREATE STUDENT ERROR:");
-    console.error(error);
+    console.error(
+      "CREATE STUDENT ERROR:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -29,13 +32,18 @@ const createStudent = async (req, res) => {
 };
 
 // ==================================================
-// Get Logged-in User Students
+// Get Students
 // ==================================================
-const getAllStudents = async (req, res) => {
+
+const getAllStudents = async (
+  req,
+  res
+) => {
   try {
-    const students = await Student.find({
-      createdBy: req.user.id,
-    }).sort({ createdAt: -1 });
+    const students =
+      await Student.find({
+        createdBy: req.user.id,
+      });
 
     res.status(200).json({
       success: true,
@@ -43,8 +51,10 @@ const getAllStudents = async (req, res) => {
       data: students,
     });
   } catch (error) {
-    console.error("GET STUDENTS ERROR:");
-    console.error(error);
+    console.error(
+      "GET STUDENTS ERROR:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -56,12 +66,17 @@ const getAllStudents = async (req, res) => {
 // ==================================================
 // Delete Student
 // ==================================================
-const deleteStudent = async (req, res) => {
+
+const deleteStudent = async (
+  req,
+  res
+) => {
   try {
-    const student = await Student.findOneAndDelete({
-      _id: req.params.id,
-      createdBy: req.user.id,
-    });
+    const student =
+      await Student.findOneAndDelete({
+        _id: req.params.id,
+        createdBy: req.user.id,
+      });
 
     if (!student) {
       return res.status(404).json({
@@ -72,11 +87,14 @@ const deleteStudent = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Student deleted successfully",
+      message:
+        "Student deleted successfully",
     });
   } catch (error) {
-    console.error("DELETE STUDENT ERROR:");
-    console.error(error);
+    console.error(
+      "DELETE STUDENT ERROR:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -88,149 +106,123 @@ const deleteStudent = async (req, res) => {
 // ==================================================
 // Upload / Register Face
 // ==================================================
-const uploadFaceImage = async (req, res) => {
+
+const uploadFaceImage = async (
+  req,
+  res
+) => {
   try {
-    console.log("");
-    console.log("========================================");
-    console.log("FACE REGISTRATION STARTED");
-    console.log("========================================");
-
-    // ------------------------------------------
-    // Check authenticated user
-    // ------------------------------------------
-
-    if (!req.user || !req.user.id) {
-      console.log("ERROR: User not authenticated");
-
-      return res.status(401).json({
-        success: false,
-        message: "User authentication required",
-      });
-    }
-
-    console.log("User ID:", req.user.id);
-
-    // ------------------------------------------
-    // Check student ID
-    // ------------------------------------------
+    console.log(
+      "========== FACE REGISTRATION =========="
+    );
 
     console.log(
       "Student ID:",
       req.params.id
     );
 
-    if (!req.params.id) {
-      return res.status(400).json({
+    console.log(
+      "User ID:",
+      req.user?.id
+    );
+
+    console.log(
+      "File:",
+      req.file
+    );
+
+    console.log(
+      "Body:",
+      req.body
+    );
+
+    // ==========================================
+    // Authentication check
+    // ==========================================
+
+    if (!req.user?.id) {
+      return res.status(401).json({
         success: false,
-        message: "Student ID is required",
+        message:
+          "Authentication required",
       });
     }
 
-    // ------------------------------------------
-    // Check uploaded file
-    // ------------------------------------------
-
-    console.log("Uploaded file:");
-
-    if (req.file) {
-      console.log({
-        fieldname: req.file.fieldname,
-        originalname: req.file.originalname,
-        filename: req.file.filename,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-      });
-    } else {
-      console.log("NO FILE RECEIVED");
-    }
+    // ==========================================
+    // File check
+    // ==========================================
 
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "Face image is required",
+        message:
+          "Face image was not received",
       });
     }
 
-    // ------------------------------------------
-    // Check request body
-    // ------------------------------------------
-
-    console.log("Request body:");
-    console.log(req.body);
+    // ==========================================
+    // Embedding check
+    // ==========================================
 
     if (!req.body.faceEmbedding) {
-      console.log(
-        "ERROR: faceEmbedding not received"
+      return res.status(400).json({
+        success: false,
+        message:
+          "Face embedding was not received",
+      });
+    }
+
+    // ==========================================
+    // Find Student
+    // ==========================================
+
+    const student =
+      await Student.findOne({
+        _id: req.params.id,
+        createdBy: req.user.id,
+      });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Student not found",
+      });
+    }
+
+    // ==========================================
+    // Parse Face Embedding
+    // ==========================================
+
+    let faceEmbedding;
+
+    try {
+      faceEmbedding =
+        JSON.parse(
+          req.body.faceEmbedding
+        );
+    } catch (error) {
+      console.error(
+        "JSON PARSE ERROR:",
+        error
       );
 
       return res.status(400).json({
         success: false,
         message:
-          "Face embedding was not received from frontend",
+          "Invalid face embedding format",
       });
     }
 
-    // ------------------------------------------
-    // Find student
-    // ------------------------------------------
+    // ==========================================
+    // Validate Array
+    // ==========================================
 
-    const student = await Student.findOne({
-      _id: req.params.id,
-      createdBy: req.user.id,
-    });
-
-    if (!student) {
-      console.log("Student not found");
-
-      return res.status(404).json({
-        success: false,
-        message: "Student not found",
-      });
-    }
-
-    console.log(
-      "Student found:",
-      student.name
-    );
-
-    // ------------------------------------------
-    // Parse face embedding
-    // ------------------------------------------
-
-    let faceEmbedding;
-
-    try {
-      faceEmbedding = JSON.parse(
-        req.body.faceEmbedding
-      );
-    } catch (error) {
-      console.error(
-        "FACE EMBEDDING JSON ERROR:"
-      );
-
-      console.error(error);
-
-      return res.status(400).json({
-        success: false,
-        message: "Invalid face embedding format",
-      });
-    }
-
-    // ------------------------------------------
-    // Validate embedding
-    // ------------------------------------------
-
-    console.log(
-      "Embedding type:",
-      typeof faceEmbedding
-    );
-
-    console.log(
-      "Embedding length:",
-      faceEmbedding?.length
-    );
-
-    if (!Array.isArray(faceEmbedding)) {
+    if (
+      !Array.isArray(
+        faceEmbedding
+      )
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -238,65 +230,62 @@ const uploadFaceImage = async (req, res) => {
       });
     }
 
-    if (faceEmbedding.length !== 128) {
+    // ==========================================
+    // Validate 128 values
+    // ==========================================
+
+    if (
+      faceEmbedding.length !== 128
+    ) {
       return res.status(400).json({
         success: false,
         message:
-          `Invalid face embedding. Expected 128 values but received ${faceEmbedding.length}`,
+          "Face embedding must contain exactly 128 values",
       });
     }
 
-    // ------------------------------------------
-    // Validate numbers
-    // ------------------------------------------
+    // ==========================================
+    // Validate Numbers
+    // ==========================================
 
-    const invalidValue =
-      faceEmbedding.some(
-        (value) =>
-          typeof value !== "number" ||
-          !Number.isFinite(value)
-      );
-
-    if (invalidValue) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Face embedding contains invalid values",
-      });
+    for (
+      const value of faceEmbedding
+    ) {
+      if (
+        typeof value !== "number" ||
+        !Number.isFinite(value)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid value inside face embedding",
+        });
+      }
     }
 
-    // ------------------------------------------
-    // Save face image
-    // ------------------------------------------
+    // ==========================================
+    // Save Face Image
+    // ==========================================
 
     student.faceImage =
       req.file.filename;
 
-    // ------------------------------------------
-    // Save face embedding
-    // ------------------------------------------
+    // ==========================================
+    // Save Face Embedding
+    // ==========================================
 
     student.faceEmbedding =
       faceEmbedding;
 
-    // ------------------------------------------
-    // Save student
-    // ------------------------------------------
-
-    console.log(
-      "Saving face registration to MongoDB..."
-    );
+    // ==========================================
+    // Save to MongoDB
+    // ==========================================
 
     await student.save();
 
     console.log(
-      "Face registration saved successfully"
+      "FACE REGISTRATION SUCCESS"
     );
-
-    console.log("========================================");
-    console.log("FACE REGISTRATION SUCCESS");
-    console.log("========================================");
-    console.log("");
 
     return res.status(200).json({
       success: true,
@@ -304,37 +293,35 @@ const uploadFaceImage = async (req, res) => {
         "Face registered successfully",
       data: student,
     });
+
   } catch (error) {
-    console.log("");
+
     console.error(
-      "========================================"
-    );
-    console.error(
-      "FACE REGISTRATION BACKEND ERROR"
-    );
-    console.error(
-      "========================================"
+      "================================"
     );
 
     console.error(
-      "Error name:",
+      "FACE REGISTRATION ERROR"
+    );
+
+    console.error(
+      "Name:",
       error.name
     );
 
     console.error(
-      "Error message:",
+      "Message:",
       error.message
     );
 
     console.error(
-      "Full error:",
-      error
+      "Stack:",
+      error.stack
     );
 
     console.error(
-      "========================================"
+      "================================"
     );
-    console.log("");
 
     return res.status(500).json({
       success: false,
@@ -346,8 +333,9 @@ const uploadFaceImage = async (req, res) => {
 };
 
 // ==================================================
-// Export Controllers
+// Exports
 // ==================================================
+
 module.exports = {
   createStudent,
   getAllStudents,
