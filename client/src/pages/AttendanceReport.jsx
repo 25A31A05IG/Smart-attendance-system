@@ -134,7 +134,7 @@ Attendance Percentage: ${report.attendance.percentage}%
                 <img
                   src={
                     report.student.faceImage
-                      ? `http://localhost:5000/${report.student.faceImage}`
+                      ? `https://smart-attendance-system-ydti.onrender.com/uploads/${report.student.faceImage}`
                       : "https://via.placeholder.com/150"
                   }
                   className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover"
