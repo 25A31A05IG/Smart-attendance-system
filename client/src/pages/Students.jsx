@@ -26,17 +26,9 @@ function Students() {
   const [loadingFaceModels, setLoadingFaceModels] =
     useState(false);
 
-  // ==================================================
-  // Initial Load
-  // ==================================================
-
   useEffect(() => {
     fetchStudents();
   }, []);
-
-  // ==================================================
-  // Fetch Students
-  // ==================================================
 
   const fetchStudents = async () => {
     try {
@@ -50,11 +42,6 @@ function Students() {
       );
     }
   };
-
-  // ==================================================
-  // Load Face Models
-  // This happens silently when needed
-  // ==================================================
 
   const loadFaceModels = async () => {
     if (faceModelsReady) {
@@ -101,20 +88,12 @@ function Students() {
     }
   };
 
-  // ==================================================
-  // Handle Input
-  // ==================================================
-
   const handleChange = (e) => {
     setStudent({
       ...student,
       [e.target.name]: e.target.value,
     });
   };
-
-  // ==================================================
-  // Add Student
-  // ==================================================
 
   const addStudent = async (e) => {
     e.preventDefault();
@@ -152,10 +131,6 @@ function Students() {
     }
   };
 
-  // ==================================================
-  // Delete Student
-  // ==================================================
-
   const deleteStudent = async (id) => {
     try {
       await API.delete(
@@ -180,12 +155,7 @@ function Students() {
     }
   };
 
-  // ==================================================
-  // Open Upload
-  // ==================================================
-
   const openUpload = async (id) => {
-    // Load models silently
     const ready =
       await loadFaceModels();
 
@@ -201,10 +171,6 @@ function Students() {
 
     fileRef.current?.click();
   };
-
-  // ==================================================
-  // Face Registration
-  // ==================================================
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -227,20 +193,12 @@ function Students() {
         file.name
       );
 
-      // ------------------------------------------
-      // Make sure models are loaded
-      // ------------------------------------------
-
       const ready =
         await loadFaceModels();
 
       if (!ready) {
         return;
       }
-
-      // ------------------------------------------
-      // Load image
-      // ------------------------------------------
 
       const imageUrl =
         URL.createObjectURL(file);
@@ -256,10 +214,6 @@ function Students() {
         "x",
         img.height
       );
-
-      // ------------------------------------------
-      // Detect face
-      // ------------------------------------------
 
       const detection =
         await faceapi
@@ -279,10 +233,6 @@ function Students() {
         imageUrl
       );
 
-      // ------------------------------------------
-      // No face
-      // ------------------------------------------
-
       if (!detection) {
         alert(
           "No face detected. Please upload a clear front-facing photo."
@@ -299,10 +249,6 @@ function Students() {
         "Detection score:",
         detection.detection.score
       );
-
-      // ------------------------------------------
-      // Generate descriptor
-      // ------------------------------------------
 
       const faceEmbedding =
         Array.from(
@@ -324,10 +270,6 @@ function Students() {
         return;
       }
 
-      // ------------------------------------------
-      // FormData
-      // ------------------------------------------
-
       const formData =
         new FormData();
 
@@ -346,11 +288,6 @@ function Students() {
       console.log(
         "Sending face registration to backend..."
       );
-
-      // IMPORTANT:
-      // Don't manually set Content-Type.
-      // Axios/browser will create the correct
-      // multipart boundary automatically.
 
       const response =
         await API.post(
@@ -401,39 +338,34 @@ function Students() {
       );
     }
 
-    // Clear file input
     e.target.value = "";
   };
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen">
 
       <Sidebar />
 
-      <div className="flex-1 p-8 bg-slate-900 min-h-screen text-white">
+      <div className="flex-1 pt-28 md:pt-0 p-4 sm:p-6 lg:p-8 bg-slate-900 min-h-screen text-white overflow-x-hidden">
 
-        {/* ==========================================
-            Title
-        ========================================== */}
+        {/* Title */}
 
-        <h1 className="text-3xl font-bold mb-6 text-green-400">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-5 sm:mb-6 text-green-400">
           Students
         </h1>
 
-        {/* ==========================================
-            Add Student
-        ========================================== */}
+        {/* Add Student */}
 
         <form
           onSubmit={addStudent}
-          className="bg-slate-800 p-6 rounded-xl shadow mb-8"
+          className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow mb-6 sm:mb-8"
         >
 
-          <h2 className="text-xl font-bold mb-4 text-green-400">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">
             Add Student
           </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
             {[
               "name",
@@ -451,7 +383,7 @@ function Students() {
                 value={student[field]}
                 onChange={handleChange}
                 required
-                className="bg-slate-900 border border-slate-600 p-3 rounded text-white"
+                className="bg-slate-900 border border-slate-600 p-3 rounded text-white w-full"
               />
 
             ))}
@@ -460,24 +392,20 @@ function Students() {
 
           <button
             type="submit"
-            className="mt-5 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded"
+            className="mt-5 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded w-full sm:w-auto"
           >
             Add Student
           </button>
 
         </form>
 
-        {/* ==========================================
-            Student List
-        ========================================== */}
+        {/* Student List */}
 
-        <div className="bg-slate-800 p-6 rounded-xl shadow">
+        <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow">
 
-          <h2 className="text-xl font-bold mb-4 text-green-400">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">
             Student List
           </h2>
-
-          {/* Hidden file input */}
 
           <input
             type="file"
@@ -487,7 +415,114 @@ function Students() {
             onChange={handleUpload}
           />
 
-          <div className="overflow-x-auto">
+          {/* MOBILE STUDENT CARDS */}
+
+          <div className="block md:hidden space-y-4">
+
+            {students.map((s) => (
+
+              <div
+                key={s._id}
+                className="bg-slate-900 rounded-xl p-4 border border-slate-700"
+              >
+
+                <div className="flex items-center gap-4 mb-4">
+
+                  {s.faceImage ? (
+
+                    <img
+                      src={`http://localhost:5000/uploads/${s.faceImage}`}
+                      alt="student"
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+
+                  ) : (
+
+                    <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-gray-400 text-xs text-center">
+                      No Photo
+                    </div>
+
+                  )}
+
+                  <div>
+
+                    <h3 className="font-bold text-lg">
+                      {s.name}
+                    </h3>
+
+                    <p className="text-gray-400 text-sm">
+                      Roll No: {s.rollNumber}
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <div className="space-y-2 text-sm">
+
+                  <p>
+                    <span className="text-gray-400">
+                      Department:
+                    </span>{" "}
+                    {s.department}
+                  </p>
+
+                  <p>
+                    <span className="text-gray-400">
+                      Year:
+                    </span>{" "}
+                    {s.year}
+                  </p>
+
+                </div>
+
+                <div className="mt-4">
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openUpload(s._id)
+                    }
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-3 rounded w-full"
+                  >
+                    📷{" "}
+                    {s.faceImage
+                      ? "Update Face"
+                      : "Register Face"}
+                  </button>
+
+                  {s.faceEmbedding &&
+                  s.faceEmbedding.length ===
+                    128 ? (
+
+                    <p className="text-green-400 text-sm mt-2 text-center">
+                      ✓ Face Registered
+                    </p>
+
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      deleteStudent(s._id)
+                    }
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-3 rounded w-full mt-3"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+
+          {/* DESKTOP TABLE */}
+
+          <div className="hidden md:block overflow-x-auto">
 
             <table className="w-full">
 
@@ -548,8 +583,6 @@ function Students() {
                       {s.year}
                     </td>
 
-                    {/* Face */}
-
                     <td className="text-center">
 
                       {s.faceImage ? (
@@ -571,9 +604,7 @@ function Students() {
                       <button
                         type="button"
                         onClick={() =>
-                          openUpload(
-                            s._id
-                          )
+                          openUpload(s._id)
                         }
                         className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded"
                       >
@@ -595,16 +626,12 @@ function Students() {
 
                     </td>
 
-                    {/* Action */}
-
                     <td className="text-center">
 
                       <button
                         type="button"
                         onClick={() =>
-                          deleteStudent(
-                            s._id
-                          )
+                          deleteStudent(s._id)
                         }
                         className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                       >
