@@ -348,13 +348,9 @@ function Students() {
 
       <div className="flex-1 pt-28 md:pt-0 p-4 sm:p-6 lg:p-8 bg-slate-900 min-h-screen text-white overflow-x-hidden">
 
-        {/* Title */}
-
         <h1 className="text-2xl sm:text-3xl font-bold mb-5 sm:mb-6 text-green-400">
           Students
         </h1>
-
-        {/* Add Student */}
 
         <form
           onSubmit={addStudent}
@@ -399,8 +395,6 @@ function Students() {
 
         </form>
 
-        {/* Student List */}
-
         <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow">
 
           <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">
@@ -431,7 +425,7 @@ function Students() {
                   {s.faceImage ? (
 
                     <img
-                      src={`http://localhost:5000/uploads/${s.faceImage}`}
+                      src={`https://smart-attendance-system-ydti.onrender.com/uploads/${s.faceImage}`}
                       alt="student"
                       className="w-16 h-16 rounded-full object-cover"
                     />
@@ -588,7 +582,7 @@ function Students() {
                       {s.faceImage ? (
 
                         <img
-                          src={`http://localhost:5000/uploads/${s.faceImage}`}
+                          src={`https://smart-attendance-system-ydti.onrender.com/uploads/${s.faceImage}`}
                           alt="student"
                           className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
                         />
