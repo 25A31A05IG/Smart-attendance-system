@@ -20,7 +20,6 @@ function Dashboard() {
   const [data, setData] = useState(null);
 
 
-
   const getDashboard = async()=>{
 
     try{
@@ -43,9 +42,6 @@ function Dashboard() {
   };
 
 
-
-
-
   const chartData = data ? [
 
     {
@@ -61,25 +57,18 @@ function Dashboard() {
   ] : [];
 
 
-
-
-
-
-
 return (
 
-<div className="flex">
+<div className="flex min-h-screen">
 
 
 <Sidebar />
 
 
-
-<div className="flex-1 p-8 bg-slate-900 min-h-screen text-white">
-
+<div className="flex-1 p-4 sm:p-6 lg:p-8 bg-slate-900 min-h-screen text-white overflow-x-hidden">
 
 
-<h1 className="text-3xl font-bold mb-6 text-green-400">
+<h1 className="text-2xl sm:text-3xl font-bold mb-5 sm:mb-6 text-green-400">
 
 Attendance Dashboard
 
@@ -87,10 +76,7 @@ Attendance Dashboard
 
 
 
-
-
-
-<div className="bg-slate-800 p-5 rounded-xl shadow mb-6 flex gap-4">
+<div className="bg-slate-800 p-4 sm:p-5 rounded-xl shadow mb-5 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
 
 
 <input
@@ -101,17 +87,16 @@ value={date}
 
 onChange={(e)=>setDate(e.target.value)}
 
-className="border border-slate-600 bg-slate-900 p-3 rounded text-white"
+className="border border-slate-600 bg-slate-900 p-3 rounded text-white w-full sm:w-auto"
 
 />
-
 
 
 <button
 
 onClick={getDashboard}
 
-className="bg-green-600 hover:bg-green-700 text-white px-6 rounded"
+className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 sm:py-2 rounded w-full sm:w-auto"
 
 >
 
@@ -120,13 +105,7 @@ View Attendance
 </button>
 
 
-
 </div>
-
-
-
-
-
 
 
 
@@ -137,13 +116,11 @@ data && (
 <>
 
 
-<div className="grid grid-cols-4 gap-5 mb-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-5 sm:mb-6">
 
 
 
-
-
-<div className="bg-slate-800 p-5 rounded-xl shadow">
+<div className="bg-slate-800 p-4 sm:p-5 rounded-xl shadow">
 
 <h3 className="text-gray-300">
 
@@ -152,7 +129,7 @@ Total Students
 </h3>
 
 
-<p className="text-3xl font-bold text-green-400">
+<p className="text-2xl sm:text-3xl font-bold text-green-400">
 
 {data.totalStudents}
 
@@ -165,10 +142,7 @@ Total Students
 
 
 
-
-
-
-<div className="bg-slate-800 p-5 rounded-xl shadow">
+<div className="bg-slate-800 p-4 sm:p-5 rounded-xl shadow">
 
 <h3 className="text-gray-300">
 
@@ -177,7 +151,7 @@ Present
 </h3>
 
 
-<p className="text-3xl font-bold text-green-400">
+<p className="text-2xl sm:text-3xl font-bold text-green-400">
 
 {data.present}
 
@@ -190,10 +164,7 @@ Present
 
 
 
-
-
-
-<div className="bg-slate-800 p-5 rounded-xl shadow">
+<div className="bg-slate-800 p-4 sm:p-5 rounded-xl shadow">
 
 <h3 className="text-gray-300">
 
@@ -202,7 +173,7 @@ Absent
 </h3>
 
 
-<p className="text-3xl font-bold text-red-400">
+<p className="text-2xl sm:text-3xl font-bold text-red-400">
 
 {data.absent}
 
@@ -215,10 +186,7 @@ Absent
 
 
 
-
-
-
-<div className="bg-slate-800 p-5 rounded-xl shadow">
+<div className="bg-slate-800 p-4 sm:p-5 rounded-xl shadow">
 
 <h3 className="text-gray-300">
 
@@ -227,7 +195,7 @@ Attendance %
 </h3>
 
 
-<p className="text-3xl font-bold text-blue-400">
+<p className="text-2xl sm:text-3xl font-bold text-blue-400">
 
 {data.percentage}%
 
@@ -238,22 +206,16 @@ Attendance %
 
 
 
-
-
 </div>
 
 
 
 
 
+<div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow mb-5 sm:mb-6">
 
 
-
-
-<div className="bg-slate-800 p-6 rounded-xl shadow mb-6">
-
-
-<h2 className="text-xl font-bold mb-5 text-green-400">
+<h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-5 text-green-400">
 
 Attendance Graph
 
@@ -261,19 +223,17 @@ Attendance Graph
 
 
 
+<div className="w-full overflow-hidden">
 
-<ResponsiveContainer width="100%" height={300}>
-
+<ResponsiveContainer width="100%" height={280}>
 
 <BarChart data={chartData}>
-
 
 <XAxis dataKey="name" stroke="white"/>
 
 <YAxis stroke="white"/>
 
 <Tooltip/>
-
 
 <Bar
 
@@ -284,11 +244,12 @@ fill="#22c55e"
 />
 
 
-
 </BarChart>
 
 
 </ResponsiveContainer>
+
+</div>
 
 
 
@@ -298,14 +259,10 @@ fill="#22c55e"
 
 
 
+<div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow">
 
 
-
-
-<div className="bg-slate-800 p-6 rounded-xl shadow">
-
-
-<h2 className="text-xl font-bold mb-5 text-green-400">
+<h2 className="text-lg sm:text-xl font-bold mb-5 text-green-400">
 
 Attendance Details
 
@@ -313,8 +270,10 @@ Attendance Details
 
 
 
+<div className="overflow-x-auto">
 
-<table className="w-full">
+
+<table className="w-full min-w-[600px]">
 
 
 <thead>
@@ -353,8 +312,6 @@ Method
 </tr>
 
 </thead>
-
-
 
 
 
@@ -444,6 +401,8 @@ item.status==="Present"
 </div>
 
 
+</div>
+
 
 
 </>
@@ -454,14 +413,12 @@ item.status==="Present"
 
 
 
-
 </div>
 
 
 </div>
 
 );
-
 
 }
 
