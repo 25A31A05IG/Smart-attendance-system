@@ -1,4 +1,3 @@
-```jsx
 import {
   useEffect,
   useRef,
@@ -1034,4 +1033,3 @@ function Students() {
 }
 
 export default Students;
-```
