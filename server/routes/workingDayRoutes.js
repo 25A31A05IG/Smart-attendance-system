@@ -3,21 +3,35 @@ const express = require("express");
 const router = express.Router();
 
 
+// Authentication middleware
+const authMiddleware = require("../middleware/authMiddleware");
+
+
 const {
-
-    addWorkingDays,
-
-    getWorkingDays
-
+  addWorkingDays,
+  getWorkingDays,
 } = require("../controllers/workingDayController");
 
 
+// ==========================================
+// WORKING DAYS ROUTES
+// ==========================================
 
-router.post("/", addWorkingDays);
+
+// Add / Update working days
+router.post(
+  "/",
+  authMiddleware,
+  addWorkingDays
+);
 
 
-router.get("/", getWorkingDays);
-
+// Get current user's working days
+router.get(
+  "/",
+  authMiddleware,
+  getWorkingDays
+);
 
 
 module.exports = router;
