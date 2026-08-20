@@ -1,10 +1,8 @@
 const Student = require("../models/Student");
 
-const cloudinary =
-  require("../config/cloudinary");
+const cloudinary = require("../config/cloudinary");
 
-const streamifier =
-  require("streamifier");
+const streamifier = require("streamifier");
 
 
 // ==================================================
@@ -12,51 +10,31 @@ const streamifier =
 // ==================================================
 
 const createStudent = async (req, res) => {
-
   try {
-
     const student = new Student({
-
       ...req.body,
-
       createdBy: req.user.id,
-
     });
-
 
     await student.save();
 
-
     res.status(201).json({
-
       success: true,
-
-      message:
-        "Student created successfully",
-
+      message: "Student created successfully",
       data: student,
-
     });
 
   } catch (error) {
-
     console.error(
       "CREATE STUDENT ERROR:",
       error
     );
 
-
     res.status(500).json({
-
       success: false,
-
-      message:
-        error.message,
-
+      message: error.message,
     });
-
   }
-
 };
 
 
@@ -65,49 +43,28 @@ const createStudent = async (req, res) => {
 // ==================================================
 
 const getAllStudents = async (req, res) => {
-
   try {
-
-    const students =
-      await Student.find({
-
-        createdBy:
-          req.user.id,
-
-      });
-
+    const students = await Student.find({
+      createdBy: req.user.id,
+    });
 
     res.status(200).json({
-
       success: true,
-
-      count:
-        students.length,
-
-      data:
-        students,
-
+      count: students.length,
+      data: students,
     });
 
   } catch (error) {
-
     console.error(
       "GET STUDENTS ERROR:",
       error
     );
 
-
     res.status(500).json({
-
       success: false,
-
-      message:
-        error.message,
-
+      message: error.message,
     });
-
   }
-
 };
 
 
@@ -116,63 +73,36 @@ const getAllStudents = async (req, res) => {
 // ==================================================
 
 const deleteStudent = async (req, res) => {
-
   try {
-
     const student =
       await Student.findOneAndDelete({
-
-        _id:
-          req.params.id,
-
-        createdBy:
-          req.user.id,
-
+        _id: req.params.id,
+        createdBy: req.user.id,
       });
-
 
     if (!student) {
-
       return res.status(404).json({
-
         success: false,
-
-        message:
-          "Student not found",
-
+        message: "Student not found",
       });
-
     }
 
-
     res.status(200).json({
-
       success: true,
-
-      message:
-        "Student deleted successfully",
-
+      message: "Student deleted successfully",
     });
 
   } catch (error) {
-
     console.error(
       "DELETE STUDENT ERROR:",
       error
     );
 
-
     res.status(500).json({
-
       success: false,
-
-      message:
-        error.message,
-
+      message: error.message,
     });
-
   }
-
 };
 
 
@@ -180,52 +110,32 @@ const deleteStudent = async (req, res) => {
 // Upload Image to Cloudinary
 // ==================================================
 
-const uploadToCloudinary = (
-  buffer
-) => {
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
 
-  return new Promise(
-    (resolve, reject) => {
+    const stream =
+      cloudinary.uploader.upload_stream(
+        {
+          folder: "smart_attendance/faces",
+          resource_type: "image",
+        },
 
-      const stream =
-        cloudinary.uploader.upload_stream(
+        (error, result) => {
 
-          {
-            folder:
-              "smart_attendance/faces",
-
-            resource_type:
-              "image",
-
-          },
-
-          (
-            error,
-            result
-          ) => {
-
-            if (error) {
-
-              reject(error);
-
-            } else {
-
-              resolve(result);
-
-            }
-
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
           }
 
-        );
+        }
+      );
 
+    streamifier
+      .createReadStream(buffer)
+      .pipe(stream);
 
-      streamifier
-        .createReadStream(buffer)
-        .pipe(stream);
-
-    }
-  );
-
+  });
 };
 
 
@@ -233,10 +143,7 @@ const uploadToCloudinary = (
 // Upload / Register Face
 // ==================================================
 
-const uploadFaceImage = async (
-  req,
-  res
-) => {
+const uploadFaceImage = async (req, res) => {
 
   try {
 
@@ -259,96 +166,74 @@ const uploadFaceImage = async (
     );
 
 
-    // ------------------------------------------
+    // ==========================================
     // Authentication
-    // ------------------------------------------
+    // ==========================================
 
     if (!req.user?.id) {
 
       return res.status(401).json({
-
         success: false,
-
-        message:
-          "Authentication required",
-
+        message: "Authentication required",
       });
 
     }
 
 
-    // ------------------------------------------
+    // ==========================================
     // Check image
-    // ------------------------------------------
+    // ==========================================
 
     if (!req.file) {
 
       return res.status(400).json({
-
         success: false,
-
-        message:
-          "Face image was not received",
-
+        message: "Face image was not received",
       });
 
     }
 
 
-    // ------------------------------------------
-    // Check embedding
-    // ------------------------------------------
+    // ==========================================
+    // Check face embedding
+    // ==========================================
 
     if (!req.body.faceEmbedding) {
 
       return res.status(400).json({
-
         success: false,
-
-        message:
-          "Face embedding was not received",
-
+        message: "Face embedding was not received",
       });
 
     }
 
 
-    // ------------------------------------------
+    // ==========================================
     // Find student
-    // ------------------------------------------
+    // ==========================================
 
     const student =
       await Student.findOne({
-
-        _id:
-          req.params.id,
-
-        createdBy:
-          req.user.id,
-
+        _id: req.params.id,
+        createdBy: req.user.id,
       });
 
 
     if (!student) {
 
       return res.status(404).json({
-
         success: false,
-
-        message:
-          "Student not found",
-
+        message: "Student not found",
       });
 
     }
 
 
-    // ------------------------------------------
-    // Parse embedding
-    // ------------------------------------------
+    // ==========================================
+    // Parse face embedding
+    // ==========================================
 
     let faceEmbedding;
-
 
     try {
 
@@ -364,60 +249,50 @@ const uploadFaceImage = async (
         error
       );
 
-
       return res.status(400).json({
-
         success: false,
-
-        message:
-          "Invalid face embedding format",
-
+        message: "Invalid face embedding format",
       });
 
     }
 
 
-    // ------------------------------------------
-    // Validate embedding
-    // ------------------------------------------
+    // ==========================================
+    // Validate embedding array
+    // ==========================================
 
     if (
-      !Array.isArray(
-        faceEmbedding
-      )
+      !Array.isArray(faceEmbedding)
     ) {
 
       return res.status(400).json({
-
         success: false,
-
-        message:
-          "Face embedding must be an array",
-
+        message: "Face embedding must be an array",
       });
 
     }
 
+
+    // ==========================================
+    // Validate 128 values
+    // ==========================================
 
     if (
       faceEmbedding.length !== 128
     ) {
 
       return res.status(400).json({
-
         success: false,
-
         message:
           "Face embedding must contain exactly 128 values",
-
       });
 
     }
 
 
-    // ------------------------------------------
+    // ==========================================
     // Validate embedding values
-    // ------------------------------------------
+    // ==========================================
 
     for (
       const value of faceEmbedding
@@ -429,12 +304,9 @@ const uploadFaceImage = async (
       ) {
 
         return res.status(400).json({
-
           success: false,
-
           message:
             "Invalid value inside face embedding",
-
         });
 
       }
@@ -442,9 +314,9 @@ const uploadFaceImage = async (
     }
 
 
-    // ------------------------------------------
+    // ==========================================
     // Upload image to Cloudinary
-    // ------------------------------------------
+    // ==========================================
 
     console.log(
       "Uploading image to Cloudinary..."
@@ -457,36 +329,49 @@ const uploadFaceImage = async (
       );
 
 
+    if (
+      !cloudinaryResult ||
+      !cloudinaryResult.secure_url
+    ) {
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Cloudinary image upload failed",
+      });
+
+    }
+
+
     console.log(
       "Cloudinary upload successful"
     );
 
-
     console.log(
-      "Image URL:",
+      "Cloudinary URL:",
       cloudinaryResult.secure_url
     );
 
 
-    // ------------------------------------------
+    // ==========================================
     // Save Cloudinary URL
-    // ------------------------------------------
+    // ==========================================
 
     student.faceImage =
       cloudinaryResult.secure_url;
 
 
-    // ------------------------------------------
+    // ==========================================
     // Save face embedding
-    // ------------------------------------------
+    // ==========================================
 
     student.faceEmbedding =
       faceEmbedding;
 
 
-    // ------------------------------------------
+    // ==========================================
     // Save student
-    // ------------------------------------------
+    // ==========================================
 
     await student.save();
 
@@ -496,10 +381,14 @@ const uploadFaceImage = async (
       student.name
     );
 
-
     console.log(
       "Embedding length:",
       student.faceEmbedding.length
+    );
+
+    console.log(
+      "Saved Image URL:",
+      student.faceImage
     );
 
 
@@ -508,6 +397,10 @@ const uploadFaceImage = async (
     );
 
 
+    // ==========================================
+    // Send response
+    // ==========================================
+
     return res.status(200).json({
 
       success: true,
@@ -515,10 +408,10 @@ const uploadFaceImage = async (
       message:
         "Face registered successfully",
 
-      data:
-        student,
+      data: student,
 
     });
+
 
   } catch (error) {
 
@@ -564,6 +457,10 @@ const uploadFaceImage = async (
 
 };
 
+
+// ==================================================
+// Export Controllers
+// ==================================================
 
 module.exports = {
 
