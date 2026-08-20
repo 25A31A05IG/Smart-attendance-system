@@ -6,8 +6,7 @@ import * as faceapi from "face-api.js";
 function Students() {
   const [students, setStudents] = useState([]);
 
-  const [uploadStudentId, setUploadStudentId] =
-    useState(null);
+  const [uploadStudentId, setUploadStudentId] = useState(null);
 
   const [student, setStudent] = useState({
     name: "",
@@ -20,28 +19,36 @@ function Students() {
 
   const fileRef = useRef(null);
 
-  const [faceModelsReady, setFaceModelsReady] =
-    useState(false);
+  const [faceModelsReady, setFaceModelsReady] = useState(false);
+  const [loadingFaceModels, setLoadingFaceModels] = useState(false);
 
-  const [loadingFaceModels, setLoadingFaceModels] =
-    useState(false);
+  // ==========================================
+  // Load students when page opens
+  // ==========================================
 
   useEffect(() => {
     fetchStudents();
   }, []);
 
+  // ==========================================
+  // Fetch students
+  // ==========================================
+
   const fetchStudents = async () => {
     try {
       const response = await API.get("/students");
 
+      console.log("STUDENTS FROM SERVER:", response.data.data);
+
       setStudents(response.data.data);
     } catch (error) {
-      console.error(
-        "FETCH STUDENTS ERROR:",
-        error
-      );
+      console.error("FETCH STUDENTS ERROR:", error);
     }
   };
+
+  // ==========================================
+  // Load Face Models
+  // ==========================================
 
   const loadFaceModels = async () => {
     if (faceModelsReady) {
@@ -67,9 +74,7 @@ function Students() {
 
       setFaceModelsReady(true);
 
-      console.log(
-        "Face recognition models loaded"
-      );
+      console.log("Face recognition models loaded");
 
       return true;
     } catch (error) {
@@ -88,12 +93,20 @@ function Students() {
     }
   };
 
+  // ==========================================
+  // Handle input changes
+  // ==========================================
+
   const handleChange = (e) => {
     setStudent({
       ...student,
       [e.target.name]: e.target.value,
     });
   };
+
+  // ==========================================
+  // Add Student
+  // ==========================================
 
   const addStudent = async (e) => {
     e.preventDefault();
@@ -104,9 +117,7 @@ function Students() {
         year: Number(student.year),
       });
 
-      alert(
-        "Student Added Successfully"
-      );
+      alert("Student Added Successfully");
 
       setStudent({
         name: "",
@@ -131,15 +142,15 @@ function Students() {
     }
   };
 
+  // ==========================================
+  // Delete Student
+  // ==========================================
+
   const deleteStudent = async (id) => {
     try {
-      await API.delete(
-        `/students/${id}`
-      );
+      await API.delete(`/students/${id}`);
 
-      alert(
-        "Student Deleted Successfully"
-      );
+      alert("Student Deleted Successfully");
 
       fetchStudents();
     } catch (error) {
@@ -155,9 +166,12 @@ function Students() {
     }
   };
 
+  // ==========================================
+  // Open Face Upload
+  // ==========================================
+
   const openUpload = async (id) => {
-    const ready =
-      await loadFaceModels();
+    const ready = await loadFaceModels();
 
     if (!ready) {
       return;
@@ -171,6 +185,10 @@ function Students() {
 
     fileRef.current?.click();
   };
+
+  // ==========================================
+  // Handle Face Upload
+  // ==========================================
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -193,20 +211,19 @@ function Students() {
         file.name
       );
 
-      const ready =
-        await loadFaceModels();
+      const ready = await loadFaceModels();
 
       if (!ready) {
         return;
       }
 
-      const imageUrl =
-        URL.createObjectURL(file);
+      // ========================================
+      // Create temporary image URL
+      // ========================================
 
-      const img =
-        await faceapi.fetchImage(
-          imageUrl
-        );
+      const imageUrl = URL.createObjectURL(file);
+
+      const img = await faceapi.fetchImage(imageUrl);
 
       console.log(
         "Image loaded:",
@@ -215,23 +232,23 @@ function Students() {
         img.height
       );
 
+      // ========================================
+      // Detect face
+      // ========================================
+
       const detection =
         await faceapi
           .detectSingleFace(
             img,
-            new faceapi.TinyFaceDetectorOptions(
-              {
-                inputSize: 320,
-                scoreThreshold: 0.3,
-              }
-            )
+            new faceapi.TinyFaceDetectorOptions({
+              inputSize: 320,
+              scoreThreshold: 0.3,
+            })
           )
           .withFaceLandmarks()
           .withFaceDescriptor();
 
-      URL.revokeObjectURL(
-        imageUrl
-      );
+      URL.revokeObjectURL(imageUrl);
 
       if (!detection) {
         alert(
@@ -241,28 +258,27 @@ function Students() {
         return;
       }
 
-      console.log(
-        "Face detected"
-      );
+      console.log("Face detected");
 
       console.log(
         "Detection score:",
         detection.detection.score
       );
 
-      const faceEmbedding =
-        Array.from(
-          detection.descriptor
-        );
+      // ========================================
+      // Generate face embedding
+      // ========================================
+
+      const faceEmbedding = Array.from(
+        detection.descriptor
+      );
 
       console.log(
         "Embedding length:",
         faceEmbedding.length
       );
 
-      if (
-        faceEmbedding.length !== 128
-      ) {
+      if (faceEmbedding.length !== 128) {
         alert(
           "Unable to generate face descriptor."
         );
@@ -270,8 +286,11 @@ function Students() {
         return;
       }
 
-      const formData =
-        new FormData();
+      // ========================================
+      // Create FormData
+      // ========================================
+
+      const formData = new FormData();
 
       formData.append(
         "faceImage",
@@ -280,33 +299,37 @@ function Students() {
 
       formData.append(
         "faceEmbedding",
-        JSON.stringify(
-          faceEmbedding
-        )
+        JSON.stringify(faceEmbedding)
       );
 
       console.log(
         "Sending face registration to backend..."
       );
 
-      const response =
-        await API.post(
-          `/students/upload/${uploadStudentId}`,
-          formData
-        );
+      // ========================================
+      // Send to backend
+      // ========================================
+
+      const response = await API.post(
+        `/students/upload/${uploadStudentId}`,
+        formData
+      );
 
       console.log(
         "SERVER RESPONSE:",
         response.data
       );
 
-      if (
-        response.data.success
-      ) {
+      // ========================================
+      // Success
+      // ========================================
+
+      if (response.data.success) {
         alert(
           "Face registered successfully!"
         );
 
+        // Refresh students from MongoDB
         await fetchStudents();
       }
 
@@ -348,9 +371,17 @@ function Students() {
 
       <div className="flex-1 pt-28 md:pt-0 p-4 sm:p-6 lg:p-8 bg-slate-900 min-h-screen text-white overflow-x-hidden">
 
+        {/* ======================================
+            TITLE
+        ====================================== */}
+
         <h1 className="text-2xl sm:text-3xl font-bold mb-5 sm:mb-6 text-green-400">
           Students
         </h1>
+
+        {/* ======================================
+            ADD STUDENT
+        ====================================== */}
 
         <form
           onSubmit={addStudent}
@@ -371,7 +402,6 @@ function Students() {
               "year",
               "section",
             ].map((field) => (
-
               <input
                 key={field}
                 name={field}
@@ -381,7 +411,6 @@ function Students() {
                 required
                 className="bg-slate-900 border border-slate-600 p-3 rounded text-white w-full"
               />
-
             ))}
 
           </div>
@@ -395,11 +424,17 @@ function Students() {
 
         </form>
 
+        {/* ======================================
+            STUDENT LIST
+        ====================================== */}
+
         <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow">
 
           <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-400">
             Student List
           </h2>
+
+          {/* Hidden file input */}
 
           <input
             type="file"
@@ -409,7 +444,9 @@ function Students() {
             onChange={handleUpload}
           />
 
-          {/* MOBILE STUDENT CARDS */}
+          {/* ====================================
+              MOBILE CARDS
+          ==================================== */}
 
           <div className="block md:hidden space-y-4">
 
@@ -422,12 +459,23 @@ function Students() {
 
                 <div className="flex items-center gap-4 mb-4">
 
+                  {/* CLOUDINARY IMAGE */}
+
                   {s.faceImage ? (
 
                     <img
-                      src={`https://smart-attendance-system-ydti.onrender.com/uploads/${s.faceImage}`}
-                      alt="student"
-                      className="w-16 h-16 rounded-full object-cover"
+                      src={s.faceImage}
+                      alt={`${s.name} face`}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
+                      onError={(e) => {
+                        console.error(
+                          "IMAGE LOAD ERROR:",
+                          s.faceImage
+                        );
+
+                        e.currentTarget.style.display =
+                          "none";
+                      }}
                     />
 
                   ) : (
@@ -468,6 +516,13 @@ function Students() {
                     {s.year}
                   </p>
 
+                  <p>
+                    <span className="text-gray-400">
+                      Section:
+                    </span>{" "}
+                    {s.section}
+                  </p>
+
                 </div>
 
                 <div className="mt-4">
@@ -477,17 +532,19 @@ function Students() {
                     onClick={() =>
                       openUpload(s._id)
                     }
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-3 rounded w-full"
+                    disabled={loadingFaceModels}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-3 rounded w-full disabled:bg-gray-500"
                   >
                     📷{" "}
-                    {s.faceImage
+                    {loadingFaceModels
+                      ? "Loading..."
+                      : s.faceImage
                       ? "Update Face"
                       : "Register Face"}
                   </button>
 
                   {s.faceEmbedding &&
-                  s.faceEmbedding.length ===
-                    128 ? (
+                  s.faceEmbedding.length === 128 ? (
 
                     <p className="text-green-400 text-sm mt-2 text-center">
                       ✓ Face Registered
@@ -513,8 +570,9 @@ function Students() {
 
           </div>
 
-
-          {/* DESKTOP TABLE */}
+          {/* ====================================
+              DESKTOP TABLE
+          ==================================== */}
 
           <div className="hidden md:block overflow-x-auto">
 
@@ -577,14 +635,25 @@ function Students() {
                       {s.year}
                     </td>
 
+                    {/* FACE */}
+
                     <td className="text-center">
 
                       {s.faceImage ? (
 
                         <img
-                          src={`https://smart-attendance-system-ydti.onrender.com/uploads/${s.faceImage}`}
-                          alt="student"
-                          className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
+                          src={s.faceImage}
+                          alt={`${s.name} face`}
+                          className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border-2 border-green-500"
+                          onError={(e) => {
+                            console.error(
+                              "IMAGE LOAD ERROR:",
+                              s.faceImage
+                            );
+
+                            e.currentTarget.style.display =
+                              "none";
+                          }}
                         />
 
                       ) : (
@@ -600,17 +669,19 @@ function Students() {
                         onClick={() =>
                           openUpload(s._id)
                         }
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded"
+                        disabled={loadingFaceModels}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded disabled:bg-gray-500"
                       >
                         📷{" "}
-                        {s.faceImage
+                        {loadingFaceModels
+                          ? "Loading..."
+                          : s.faceImage
                           ? "Update Face"
                           : "Register Face"}
                       </button>
 
                       {s.faceEmbedding &&
-                      s.faceEmbedding.length ===
-                        128 ? (
+                      s.faceEmbedding.length === 128 ? (
 
                         <p className="text-green-400 text-sm mt-2">
                           ✓ Face Registered
@@ -619,6 +690,8 @@ function Students() {
                       ) : null}
 
                     </td>
+
+                    {/* DELETE */}
 
                     <td className="text-center">
 
