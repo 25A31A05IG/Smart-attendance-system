@@ -5,62 +5,106 @@ import Sidebar from "../components/Sidebar";
 
 function WorkingDays() {
 
-
   const [academicYear, setAcademicYear] = useState("");
 
   const [totalDays, setTotalDays] = useState("");
 
   const [currentData, setCurrentData] = useState(null);
 
+  const [loading, setLoading] = useState(false);
 
 
-  const fetchWorkingDays = async()=>{
+  // ==========================================
+  // FETCH CURRENT USER'S WORKING DAYS
+  // ==========================================
 
-    try{
+  const fetchWorkingDays = async () => {
 
-      const response = await API.get("/working-days");
+    try {
 
-      setCurrentData(response.data.data);
+      const response =
+        await API.get("/working-days");
+
+      setCurrentData(
+        response.data.data
+      );
 
     }
-    catch(error){
 
-      console.log(error);
+    catch (error) {
+
+      console.error(
+        "FETCH WORKING DAYS ERROR:",
+        error
+      );
 
     }
 
   };
 
 
+  // ==========================================
+  // LOAD WORKING DAYS WHEN PAGE OPENS
+  // ==========================================
 
-  useEffect(()=>{
+  useEffect(() => {
 
     fetchWorkingDays();
 
-  },[]);
+  }, []);
 
 
+  // ==========================================
+  // SAVE / UPDATE WORKING DAYS
+  // ==========================================
 
-
-  const saveWorkingDays = async(e)=>{
+  const saveWorkingDays = async (e) => {
 
     e.preventDefault();
 
 
-    try{
+    if (!academicYear.trim()) {
+
+      alert("Please enter academic year");
+
+      return;
+
+    }
 
 
-      await API.post("/working-days",{
+    if (!totalDays || Number(totalDays) <= 0) {
 
-        academicYear,
+      alert(
+        "Please enter valid working days"
+      );
 
-        totalDays:Number(totalDays)
+      return;
 
-      });
+    }
 
 
+    try {
 
-      alert("Working days saved successfully");
+      setLoading(true);
+
+
+      await API.post(
+        "/working-days",
+        {
+
+          academicYear:
+            academicYear.trim(),
+
+          totalDays:
+            Number(totalDays),
+
+        }
+      );
+
+
+      alert(
+        "Working days saved successfully"
+      );
 
 
       setAcademicYear("");
@@ -68,39 +112,60 @@ function WorkingDays() {
       setTotalDays("");
 
 
-      fetchWorkingDays();
-
-
-
-    }
-    catch(error){
-
-      console.log(error);
-
-      alert("Failed to save working days");
+      // Refresh current data
+      await fetchWorkingDays();
 
     }
 
+    catch (error) {
+
+      console.error(
+        "SAVE WORKING DAYS ERROR:",
+        error
+      );
+
+
+      alert(
+
+        error.response?.data?.message ||
+
+        "Failed to save working days"
+
+      );
+
+    }
+
+    finally {
+
+      setLoading(false);
+
+    }
 
   };
 
 
-
-
-
   return (
-
 
     <div className="flex bg-black min-h-screen">
 
 
+      {/* =====================================
+          SIDEBAR
+      ===================================== */}
+
       <Sidebar />
 
 
+      {/* =====================================
+          MAIN CONTENT
+      ===================================== */}
 
       <div className="flex-1 p-8 bg-black min-h-screen">
 
 
+        {/* ===================================
+            TITLE
+        =================================== */}
 
         <h1 className="text-3xl font-bold mb-6 text-green-400">
 
@@ -109,8 +174,9 @@ function WorkingDays() {
         </h1>
 
 
-
-
+        {/* ===================================
+            FORM
+        =================================== */}
 
         <form
 
@@ -121,7 +187,6 @@ function WorkingDays() {
         >
 
 
-
           <h2 className="text-xl font-bold mb-5 text-white">
 
             Enter Academic Working Days
@@ -129,7 +194,7 @@ function WorkingDays() {
           </h2>
 
 
-
+          {/* Academic Year */}
 
           <input
 
@@ -139,152 +204,134 @@ function WorkingDays() {
 
             value={academicYear}
 
-            onChange={(e)=>setAcademicYear(e.target.value)}
+            onChange={(e) =>
+              setAcademicYear(e.target.value)
+            }
 
             className="w-full bg-black text-white border border-gray-700 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-500"
 
           />
 
 
-
-
+          {/* Total Working Days */}
 
           <input
 
             type="number"
 
+            min="1"
+
             placeholder="Total Working Days"
 
             value={totalDays}
 
-            onChange={(e)=>setTotalDays(e.target.value)}
+            onChange={(e) =>
+              setTotalDays(e.target.value)
+            }
 
             className="w-full bg-black text-white border border-gray-700 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-500"
 
           />
 
 
-
-
-
-
-
+          {/* Save Button */}
 
           <button
 
-            className="bg-green-600 hover:bg-green-700 text-black px-6 py-3 rounded-lg w-full font-bold"
+            type="submit"
+
+            disabled={loading}
+
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-black px-6 py-3 rounded-lg w-full font-bold"
 
           >
 
-            Save Working Days
+            {loading
+              ? "Saving..."
+              : "Save Working Days"}
 
           </button>
-
 
 
         </form>
 
 
-
-
-
-
-
-
+        {/* ===================================
+            CURRENT WORKING DAYS
+        =================================== */}
 
         {
 
           currentData && (
 
+            <div className="bg-gray-900 p-6 rounded-xl shadow-lg mt-6 max-w-xl border border-green-600">
 
 
-          <div className="bg-gray-900 p-6 rounded-xl shadow-lg mt-6 max-w-xl border border-green-600">
+              <h2 className="text-xl font-bold mb-5 text-green-400">
+
+                Current Working Days
+
+              </h2>
 
 
-
-            <h2 className="text-xl font-bold mb-5 text-green-400">
-
-              Current Working Days
-
-            </h2>
+              <div className="space-y-3">
 
 
+                {/* Academic Year */}
+
+                <div className="bg-black border border-gray-700 p-4 rounded-lg">
+
+                  <p className="text-gray-400">
+
+                    Academic Year
+
+                  </p>
 
 
+                  <p className="text-xl font-bold text-green-400">
 
-            <div className="space-y-3">
+                    {currentData.academicYear}
 
+                  </p>
 
-
-              <div className="bg-black border border-gray-700 p-4 rounded-lg">
-
-                <p className="text-gray-400">
-
-                  Academic Year
-
-                </p>
+                </div>
 
 
-                <p className="text-xl font-bold text-green-400">
+                {/* Total Days */}
 
-                  {currentData.academicYear}
+                <div className="bg-black border border-gray-700 p-4 rounded-lg">
 
-                </p>
+                  <p className="text-gray-400">
+
+                    Total Working Days
+
+                  </p>
+
+
+                  <p className="text-xl font-bold text-green-400">
+
+                    {currentData.totalDays}
+
+                  </p>
+
+                </div>
+
 
               </div>
-
-
-
-
-
-
-
-
-              <div className="bg-black border border-gray-700 p-4 rounded-lg">
-
-                <p className="text-gray-400">
-
-                  Total Working Days
-
-                </p>
-
-
-                <p className="text-xl font-bold text-green-400">
-
-                  {currentData.totalDays}
-
-                </p>
-
-              </div>
-
-
 
 
             </div>
-
-
-
-
-
-          </div>
-
 
           )
 
         }
 
 
-
-
-
       </div>
-
 
     </div>
 
-
   );
-
 
 }
 
