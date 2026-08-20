@@ -1,100 +1,195 @@
 const WorkingDay = require("../models/WorkingDay");
 
 
+// ==========================================
+// Add / Update Working Days
+// ==========================================
 
-// Add working days
+const addWorkingDays = async (req, res) => {
 
-const addWorkingDays = async(req,res)=>{
+  try {
 
-
-    try{
-
-
-        const workingDay = new WorkingDay(req.body);
-
-
-        await workingDay.save();
-
+    const {
+      academicYear,
+      totalDays
+    } = req.body;
 
 
-        res.status(201).json({
+    // Check authentication
+    if (!req.user || !req.user.id) {
 
-            success:true,
+      return res.status(401).json({
 
-            message:"Working days saved successfully",
+        success: false,
 
-            data:workingDay
+        message: "User authentication required"
 
-        });
-
-
-
-    }catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+      });
 
     }
 
+
+    // Validate data
+    if (!academicYear || totalDays === undefined) {
+
+      return res.status(400).json({
+
+        success: false,
+
+        message: "Academic year and total working days are required"
+
+      });
+
+    }
+
+
+    // Find existing working days for this user
+    const existingWorkingDay =
+      await WorkingDay.findOne({
+
+        createdBy: req.user.id,
+
+        academicYear
+
+      });
+
+
+    let workingDay;
+
+
+    // If already exists → update
+    if (existingWorkingDay) {
+
+      existingWorkingDay.totalDays =
+        Number(totalDays);
+
+      workingDay =
+        await existingWorkingDay.save();
+
+    }
+
+    // Otherwise → create
+    else {
+
+      workingDay =
+        await WorkingDay.create({
+
+          createdBy: req.user.id,
+
+          academicYear,
+
+          totalDays: Number(totalDays)
+
+        });
+
+    }
+
+
+    res.status(200).json({
+
+      success: true,
+
+      message: "Working days saved successfully",
+
+      data: workingDay
+
+    });
+
+
+  }
+  catch (error) {
+
+    console.error(
+      "ADD WORKING DAYS ERROR:",
+      error
+    );
+
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
 
 };
 
 
 
+// ==========================================
+// Get Working Days
+// ==========================================
 
-// Get working days
+const getWorkingDays = async (req, res) => {
 
-const getWorkingDays = async(req,res)=>{
+  try {
 
+    // Check authentication
+    if (!req.user || !req.user.id) {
 
-    try{
+      return res.status(401).json({
 
+        success: false,
 
-        const workingDays = await WorkingDay.findOne()
-        .sort({createdAt:-1});
+        message: "User authentication required"
 
-
-
-        res.status(200).json({
-
-            success:true,
-
-            data:workingDays
-
-        });
-
-
-
-    }catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+      });
 
     }
 
 
-};
+    // Get latest working days
+    // belonging ONLY to logged-in user
 
+    const workingDays =
+      await WorkingDay.findOne({
+
+        createdBy: req.user.id
+
+      })
+      .sort({
+        createdAt: -1
+      });
+
+
+    res.status(200).json({
+
+      success: true,
+
+      data: workingDays
+
+    });
+
+
+  }
+  catch (error) {
+
+    console.error(
+      "GET WORKING DAYS ERROR:",
+      error
+    );
+
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
 
 
 module.exports = {
 
-    addWorkingDays,
+  addWorkingDays,
 
-    getWorkingDays
+  getWorkingDays
 
 };
