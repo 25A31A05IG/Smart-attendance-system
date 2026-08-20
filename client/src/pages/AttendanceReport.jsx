@@ -7,21 +7,57 @@ function AttendanceReport() {
 
   const [report, setReport] = useState(null);
 
+  // ==========================================
+  // Search Student
+  // ==========================================
+
   const searchStudent = async () => {
+    if (!rollNumber.trim()) {
+      alert("Please enter a roll number");
+      return;
+    }
+
     try {
       const response = await API.get(
         `/report/${rollNumber}`
       );
 
-      setReport(response.data.data);
-    } catch (error) {
-      console.log(error);
+      console.log(
+        "REPORT RESPONSE:",
+        response.data
+      );
 
-      alert("Student not found");
+      console.log(
+        "STUDENT FACE IMAGE:",
+        response.data.data?.student?.faceImage
+      );
+
+      setReport(response.data.data);
+
+    } catch (error) {
+      console.error(
+        "SEARCH STUDENT ERROR:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Student not found"
+      );
+
+      setReport(null);
     }
   };
 
+  // ==========================================
+  // Share Report
+  // ==========================================
+
   const shareReport = async () => {
+    if (!report) {
+      return;
+    }
+
     const text = `
 Attendance Report
 
@@ -44,33 +80,55 @@ Absent Days: ${report.attendance.absentDays}
 Attendance Percentage: ${report.attendance.percentage}%
 `;
 
-    if (navigator.share) {
-      await navigator.share({
-        title: "Attendance Report",
-        text: text
-      });
-    } else {
-      navigator.clipboard.writeText(text);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Attendance Report",
+          text: text,
+        });
+      } else {
+        await navigator.clipboard.writeText(text);
 
-      alert("Report copied to clipboard");
+        alert(
+          "Report copied to clipboard"
+        );
+      }
+    } catch (error) {
+      console.log(
+        "SHARE ERROR:",
+        error
+      );
     }
   };
 
   return (
     <div className="flex min-h-screen">
 
+      {/* ========================================
+          SIDEBAR
+      ======================================== */}
+
       <Sidebar />
+
+
+      {/* ========================================
+          MAIN CONTENT
+      ======================================== */}
 
       <div className="flex-1 bg-slate-900 min-h-screen p-4 sm:p-6 lg:p-8 text-white pt-28 md:pt-0">
 
-        {/* ================= TITLE ================= */}
+        {/* ========================================
+            TITLE
+        ======================================== */}
 
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-green-400">
           Attendance Report
         </h1>
 
 
-        {/* ================= SEARCH ================= */}
+        {/* ========================================
+            SEARCH
+        ======================================== */}
 
         <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow mb-6">
 
@@ -87,7 +145,12 @@ Attendance Percentage: ${report.attendance.percentage}%
               onChange={(e) =>
                 setRollNumber(e.target.value)
               }
-              className="bg-slate-900 border border-slate-600 p-3 rounded w-full sm:w-80"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  searchStudent();
+                }
+              }}
+              className="bg-slate-900 border border-slate-600 p-3 rounded w-full sm:w-80 text-white"
             />
 
             <button
@@ -102,12 +165,16 @@ Attendance Percentage: ${report.attendance.percentage}%
         </div>
 
 
-        {/* ================= REPORT ================= */}
+        {/* ========================================
+            REPORT
+        ======================================== */}
 
         {report && (
           <>
 
-            {/* ================= SHARE ================= */}
+            {/* ======================================
+                SHARE BUTTON
+            ====================================== */}
 
             <div className="flex justify-end mb-5">
 
@@ -121,7 +188,9 @@ Attendance Percentage: ${report.attendance.percentage}%
             </div>
 
 
-            {/* ================= STUDENT PROFILE ================= */}
+            {/* ======================================
+                STUDENT PROFILE
+            ====================================== */}
 
             <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow mb-6">
 
@@ -131,14 +200,47 @@ Attendance Percentage: ${report.attendance.percentage}%
 
               <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-center sm:items-start">
 
-                <img
-                  src={
-                    report.student.faceImage
-                      ? `https://smart-attendance-system-ydti.onrender.com/uploads/${report.student.faceImage}`
-                      : "https://via.placeholder.com/150"
-                  }
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover"
-                />
+                {/* ==================================
+                    PROFILE PHOTO
+                ================================== */}
+
+                <div className="flex-shrink-0">
+
+                  {report.student.faceImage ? (
+
+                    <img
+                      src={
+                        report.student.faceImage
+                      }
+                      alt={
+                        report.student.name
+                      }
+                      className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-green-500"
+                      onError={(e) => {
+                        console.error(
+                          "PROFILE IMAGE FAILED:",
+                          report.student.faceImage
+                        );
+
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/150";
+                      }}
+                    />
+
+                  ) : (
+
+                    <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-slate-700 flex items-center justify-center text-gray-400 text-sm text-center border-4 border-slate-600">
+                      No Photo
+                    </div>
+
+                  )}
+
+                </div>
+
+
+                {/* ==================================
+                    STUDENT DETAILS
+                ================================== */}
 
                 <div className="text-center sm:text-left space-y-2">
 
@@ -174,7 +276,9 @@ Attendance Percentage: ${report.attendance.percentage}%
             </div>
 
 
-            {/* ================= ATTENDANCE SUMMARY ================= */}
+            {/* ======================================
+                ATTENDANCE SUMMARY
+            ====================================== */}
 
             <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow mb-6">
 
@@ -184,6 +288,9 @@ Attendance Percentage: ${report.attendance.percentage}%
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
+
+                {/* TOTAL WORKING DAYS */}
+
                 <div className="bg-slate-700 p-4 sm:p-5 rounded">
 
                   <h3>
@@ -191,11 +298,16 @@ Attendance Percentage: ${report.attendance.percentage}%
                   </h3>
 
                   <p className="text-2xl sm:text-3xl font-bold text-green-400">
-                    {report.attendance.totalWorkingDays}
+                    {
+                      report.attendance
+                        .totalWorkingDays
+                    }
                   </p>
 
                 </div>
 
+
+                {/* PRESENT */}
 
                 <div className="bg-slate-700 p-4 sm:p-5 rounded">
 
@@ -204,11 +316,16 @@ Attendance Percentage: ${report.attendance.percentage}%
                   </h3>
 
                   <p className="text-2xl sm:text-3xl font-bold text-green-400">
-                    {report.attendance.presentDays}
+                    {
+                      report.attendance
+                        .presentDays
+                    }
                   </p>
 
                 </div>
 
+
+                {/* ABSENT */}
 
                 <div className="bg-slate-700 p-4 sm:p-5 rounded">
 
@@ -217,11 +334,16 @@ Attendance Percentage: ${report.attendance.percentage}%
                   </h3>
 
                   <p className="text-2xl sm:text-3xl font-bold text-red-400">
-                    {report.attendance.absentDays}
+                    {
+                      report.attendance
+                        .absentDays
+                    }
                   </p>
 
                 </div>
 
+
+                {/* PERCENTAGE */}
 
                 <div className="bg-slate-700 p-4 sm:p-5 rounded">
 
@@ -230,7 +352,10 @@ Attendance Percentage: ${report.attendance.percentage}%
                   </h3>
 
                   <p className="text-2xl sm:text-3xl font-bold text-yellow-400">
-                    {report.attendance.percentage}%
+                    {
+                      report.attendance
+                        .percentage
+                    }%
                   </p>
 
                 </div>
@@ -240,7 +365,9 @@ Attendance Percentage: ${report.attendance.percentage}%
             </div>
 
 
-            {/* ================= ATTENDANCE HISTORY ================= */}
+            {/* ======================================
+                ATTENDANCE HISTORY
+            ====================================== */}
 
             <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow">
 
@@ -249,56 +376,74 @@ Attendance Percentage: ${report.attendance.percentage}%
               </h2>
 
 
-              {/* ================= MOBILE HISTORY ================= */}
+              {/* ==================================
+                  MOBILE HISTORY
+              ================================== */}
 
               <div className="block md:hidden space-y-3">
 
-                {report.attendanceHistory?.map(
-                  (item) => (
+                {report.attendanceHistory &&
+                report.attendanceHistory.length >
+                  0 ? (
 
-                    <div
-                      key={item._id}
-                      className="bg-slate-900 border border-slate-700 rounded-xl p-4"
-                    >
+                  report.attendanceHistory.map(
+                    (item) => (
 
-                      <div className="flex justify-between items-center mb-3">
+                      <div
+                        key={item._id}
+                        className="bg-slate-900 border border-slate-700 rounded-xl p-4"
+                      >
 
-                        <span className="font-semibold">
-                          {new Date(
-                            item.date
-                          ).toLocaleDateString()}
-                        </span>
+                        <div className="flex justify-between items-center mb-3">
 
-                        <span
-                          className={
-                            item.status === "Present"
-                              ? "text-green-400 font-bold"
-                              : "text-red-400 font-bold"
-                          }
-                        >
-                          {item.status}
-                        </span>
+                          <span className="font-semibold">
+                            {new Date(
+                              item.date
+                            ).toLocaleDateString()}
+                          </span>
+
+                          <span
+                            className={
+                              item.status ===
+                              "Present"
+                                ? "text-green-400 font-bold"
+                                : "text-red-400 font-bold"
+                            }
+                          >
+                            {item.status}
+                          </span>
+
+                        </div>
+
+                        <div className="text-sm text-gray-400">
+
+                          Method:
+
+                          <span className="text-white ml-2">
+                            {item.method}
+                          </span>
+
+                        </div>
 
                       </div>
 
-                      <div className="text-sm text-gray-400">
-
-                        Method:
-                        <span className="text-white ml-2">
-                          {item.method}
-                        </span>
-
-                      </div>
-
-                    </div>
-
+                    )
                   )
+
+                ) : (
+
+                  <p className="text-gray-400 text-center py-5">
+                    No attendance records found.
+                  </p>
+
                 )}
 
               </div>
 
 
-              {/* ================= DESKTOP HISTORY ================= */}
+              {/* ==================================
+                  DESKTOP HISTORY
+              ================================== */}
 
               <div className="hidden md:block overflow-x-auto">
 
@@ -327,44 +472,65 @@ Attendance Percentage: ${report.attendance.percentage}%
 
                   <tbody>
 
-                    {report.attendanceHistory?.map(
-                      (item) => (
+                    {report.attendanceHistory &&
+                    report.attendanceHistory.length >
+                      0 ? (
 
-                        <tr
-                          key={item._id}
-                          className="border-b border-slate-700"
-                        >
+                      report.attendanceHistory.map(
+                        (item) => (
 
-                          <td className="p-3 text-center">
-                            {new Date(
-                              item.date
-                            ).toLocaleDateString()}
-                          </td>
+                          <tr
+                            key={item._id}
+                            className="border-b border-slate-700"
+                          >
 
-
-                          <td className="text-center">
-
-                            <span
-                              className={
-                                item.status ===
-                                "Present"
-                                  ? "text-green-400 font-bold"
-                                  : "text-red-400 font-bold"
-                              }
-                            >
-                              {item.status}
-                            </span>
-
-                          </td>
+                            <td className="p-3 text-center">
+                              {new Date(
+                                item.date
+                              ).toLocaleDateString()}
+                            </td>
 
 
-                          <td className="text-center">
-                            {item.method}
-                          </td>
+                            <td className="text-center">
 
-                        </tr>
+                              <span
+                                className={
+                                  item.status ===
+                                  "Present"
+                                    ? "text-green-400 font-bold"
+                                    : "text-red-400 font-bold"
+                                }
+                              >
+                                {item.status}
+                              </span>
 
+                            </td>
+
+
+                            <td className="text-center">
+
+                              {item.method}
+
+                            </td>
+
+                          </tr>
+
+                        )
                       )
+
+                    ) : (
+
+                      <tr>
+
+                        <td
+                          colSpan="3"
+                          className="text-center text-gray-400 py-5"
+                        >
+                          No attendance records found.
+                        </td>
+
+                      </tr>
+
                     )}
 
                   </tbody>
