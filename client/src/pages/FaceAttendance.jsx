@@ -31,6 +31,13 @@ function FaceAttendance() {
     );
 
   // ==========================================
+  // Camera
+  // ==========================================
+
+  const [facingMode, setFacingMode] =
+    useState("user");
+
+  // ==========================================
   // Load models and students
   // ==========================================
 
@@ -130,6 +137,20 @@ function FaceAttendance() {
         "Failed to load students."
       );
     }
+  };
+
+  // ==========================================
+  // Switch Camera
+  // ==========================================
+
+  const switchCamera = () => {
+
+    setFacingMode((currentMode) =>
+      currentMode === "user"
+        ? "environment"
+        : "user"
+    );
+
   };
 
   // ==========================================
@@ -461,33 +482,81 @@ function FaceAttendance() {
     }
   };
 
+  // ==========================================
+  // Webcam settings
+  // ==========================================
+
+  const videoConstraints = {
+    facingMode: facingMode,
+    width: 500,
+    height: 500,
+  };
+
   return (
     <div className="flex">
 
       <Sidebar />
 
-      <div className="flex-1 bg-slate-900 min-h-screen p-8 text-white">
+      <div className="flex-1 bg-slate-900 min-h-screen p-4 sm:p-8 text-white">
 
-        <h1 className="text-3xl font-bold mb-6 text-green-400">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-green-400">
           Face Recognition Attendance
         </h1>
 
-        <div className="bg-slate-800 p-8 rounded-xl shadow max-w-3xl">
+        <div className="bg-slate-800 p-4 sm:p-8 rounded-xl shadow max-w-3xl">
 
+          {/* ================================= */}
           {/* Camera */}
+          {/* ================================= */}
 
           <div className="flex justify-center">
 
-            <Webcam
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              width={500}
-              className="rounded-xl"
-            />
+            <div className="relative">
+
+              <Webcam
+                ref={webcamRef}
+                audio={false}
+                screenshotFormat="image/jpeg"
+                videoConstraints={
+                  videoConstraints
+                }
+                width={500}
+                className="rounded-xl w-full max-w-[500px]"
+              />
+
+              {/* ================================= */}
+              {/* Camera Switch Symbol */}
+              {/* ================================= */}
+
+              <button
+                type="button"
+                onClick={switchCamera}
+                disabled={processing}
+                aria-label="Switch camera"
+                className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center text-white text-2xl transition-all active:scale-90 disabled:opacity-50"
+              >
+                🔄
+              </button>
+
+            </div>
 
           </div>
 
+          {/* ================================= */}
+          {/* Camera Status */}
+          {/* ================================= */}
+
+          <p className="text-center text-gray-400 text-sm mt-3">
+
+            {facingMode === "user"
+              ? "Front Camera"
+              : "Back Camera"}
+
+          </p>
+
+          {/* ================================= */}
           {/* Status */}
+          {/* ================================= */}
 
           <div className="text-center mt-6">
 
@@ -495,7 +564,9 @@ function FaceAttendance() {
               {message}
             </p>
 
-            {/* Button */}
+            {/* ================================= */}
+            {/* Capture Button */}
+            {/* ================================= */}
 
             <button
               onClick={capture}
