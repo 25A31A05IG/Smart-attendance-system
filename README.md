@@ -7,7 +7,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Styled-38B2AC?logo=tailwind-css)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-A modern **full-stack Smart Attendance Management System** built using the **MERN Stack**. The application enables teachers and administrators to efficiently manage students, record attendance using multiple methods, generate attendance reports, and visualize attendance analytics through an intuitive dashboard.
+A modern **full-stack Smart Attendance Management System** built using the **MERN Stack**. The application enables teachers and administrators to efficiently manage students, record attendance using multiple methods, generate attendance reports, manage account-specific working days, and visualize attendance analytics through an intuitive dashboard.
 
 ---
 
@@ -15,56 +15,83 @@ A modern **full-stack Smart Attendance Management System** built using the **MER
 
 **Frontend:** https://smart-attendance-system-olive-pi.vercel.app/
 
-**Backend API:**  https://smart-attendance-system-ydti.onrender.com
+**Backend API:** https://smart-attendance-system-ydti.onrender.com
 
 ---
 
 ## ✨ Features
 
 ### 🔐 Authentication
+
 - Teacher/Admin Registration
 - Secure Login using JWT Authentication
 - Protected Routes
 - User-specific student management
+- User-specific data isolation
 
 ### 👨‍🎓 Student Management
+
 - Add Students
 - Delete Students
 - Upload Student Face Images
+- Store Student Face Embeddings
 - View Student List
 - Search Students
+- User-specific student management
+- Roll number uniqueness within each teacher/admin account
 
 ### ✅ Attendance Management
+
 - Manual Attendance
 - QR Code Attendance
 - Face Recognition Attendance
 - Bulk Attendance
 - Attendance Statistics
+- Present/Absent Status Management
+- Student-specific Attendance Records
 
 ### 📊 Dashboard
+
 - Total Students
 - Present Students
 - Absent Students
 - Attendance Percentage
 - Interactive Attendance Graph
 - Daily Attendance Details
+- Account-specific attendance analytics
 
 ### 📅 Attendance History
+
 - Date-wise Attendance Records
 - Attendance Details Modal
 - Attendance Percentage Calculation
 - Search by Date
+- Student-specific Attendance History
+- Attendance Method Tracking
 
 ### 📄 Student Reports
+
 - Student Profile
+- Student Face Image
 - Attendance Summary
+- Total Working Days
+- Present Days
+- Absent Days
+- Attendance Percentage
 - Complete Attendance History
+- Attendance Method
 - Share Attendance Report
+- Account-specific Student Reports
 
 ### 📚 Working Days Management
+
 - Set Academic Year
 - Manage Total Working Days
 - View Current Working Days
+- Account-specific Working Days
+- Different teachers/admins can have different working-day values
+- Working days are shared among all students belonging to the same teacher/admin account
+- Working days do not affect students belonging to other accounts
 
 ---
 
@@ -87,7 +114,10 @@ A modern **full-stack Smart Attendance Management System** built using the **MER
 - JWT Authentication
 - Multer
 - bcrypt
+- 
+## Cloud Services
 
+- Cloudinary – Cloud Image Storage & CDN
 ---
 
 # 📂 Project Structure
@@ -161,6 +191,11 @@ PORT=5000
 MONGODB_URI=mongodb_connection_string
 
 JWT_SECRET=secret_key
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
 ```
 
 ---
@@ -181,16 +216,6 @@ VITE_API_URL=https://your-render-backend.onrender.com/api
 
 # 📸 Screenshots
 
-Add screenshots here after deployment.
-
-Example:
-
-- Login Page
-- Dashboard
-- Student Management
-- Attendance Page
-- QR Attendance
-- Attendance Report
 
 ---
 
@@ -221,14 +246,25 @@ Example:
 
 This project demonstrates practical implementation of:
 
-- MERN Stack Development
-- REST API Design
-- JWT Authentication
-- MongoDB Relationships
-- File Uploads
-- Dashboard Analytics
-- QR Code Integration
-- Responsive UI Design
+1. MERN Stack Development
+2. REST API Design
+3. JWT Authentication
+4. Protected API Routes
+5. MongoDB Relationships
+6. Mongoose Schema Design
+7. User-specific Data Isolation
+8. Account-based Data Management
+9. File Uploads
+10. Cloud Image Storage
+11. Dashboard Analytics
+12. QR Code Integration
+13. Face Recognition
+14. Face Embeddings
+15. Attendance Percentage Calculation
+16. Account-specific Working Days Management
+17. Student Ownership
+18. Compound Database Indexing
+19. Responsive UI Design
 
 ---
 
